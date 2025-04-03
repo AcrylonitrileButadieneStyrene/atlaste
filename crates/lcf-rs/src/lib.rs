@@ -1,7 +1,19 @@
 #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::cast_possible_truncation)]
 
+mod error;
+mod formats;
 mod lcf;
-pub use lcf::{Error, Lcf, ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit, lsd::LcfSaveData};
+
+pub use error::Error;
+pub use formats::{
+    ldb::{self, LcfDataBase},
+    lmt::{self, LcfMapTree},
+    lmu::{self, LcfMapUnit},
+    lsd::{self, LcfSaveData},
+};
+pub use lcf::Lcf;
 
 pub use nom;

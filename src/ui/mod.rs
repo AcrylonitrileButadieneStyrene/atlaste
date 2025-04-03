@@ -84,7 +84,7 @@ fn draw(
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("RGP_RT.ldb", &["ldb"])
                             .pick_file()
-                            .and_then(|file| file.parent().map(|file| file.to_owned()))
+                            .and_then(|file| file.parent().map(ToOwned::to_owned))
                         {
                             state.game_dir = path;
                         }

@@ -2,6 +2,7 @@
 #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::cast_possible_truncation)]
 
 mod app;
 mod lcf_asset_loader;
