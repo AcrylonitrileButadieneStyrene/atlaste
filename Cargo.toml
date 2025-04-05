@@ -21,6 +21,7 @@ panic = "abort"
 [dependencies]
 bevy = "0.15.3"
 bevy_egui = "0.33.0"
+encoding_rs = "0.8.35"
 rfd = "0.15.3"
 thiserror = "2.0"
 

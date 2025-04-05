@@ -1,17 +1,12 @@
 use nom::{Parser, multi::length_count};
 
+pub use super::structs::map::Map;
+
 pub(crate) const HEADER: &[u8] = b"LcfMapTree";
 
-#[derive(serde::Serialize, serde::Deserialize, derive_builder::Builder)]
-pub struct LcfMapTree {}
-
-impl From<LcfMapTreeBuilderError> for crate::Error {
-    fn from(value: LcfMapTreeBuilderError) -> Self {
-        match value {
-            LcfMapTreeBuilderError::UninitializedField(x) => Self::UninitializedField(x),
-            LcfMapTreeBuilderError::ValidationError(x) => Self::ValidationError(x),
-        }
-    }
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct LcfMapTree {
+    pub maps: Vec<Map>,
 }
 
 impl LcfMapTree {
@@ -37,16 +32,39 @@ impl LcfMapTree {
         )
             .parse(input)?;
 
-        Ok((input, Self::from_chunks(maps, order, active, start)))
+        Ok((input, Self::from_chunks(&maps, &order, active, start)))
     }
 
     pub(crate) fn from_chunks(
-        _maps: Vec<(u64, Vec<crate::lcf::Chunk<'_>>)>,
-        _order: Vec<u64>,
+        maps: &[(u64, Vec<crate::lcf::Chunk<'_>>)],
+        order: &[u64],
         _active: u64,
         _start: Vec<crate::lcf::Chunk<'_>>,
     ) -> Result<Self, crate::Error> {
-        let builder = LcfMapTreeBuilder::create_empty();
-        builder.build().map_err(crate::Error::from)
+        if cfg!(debug_assertions) {
+            assert_eq!(maps.len(), order.len());
+            for (index, (id, _)) in maps.iter().enumerate() {
+                assert_eq!(index as u64, *id);
+            }
+        }
+
+        let mut maps = maps
+            .iter()
+            .map(|(index, data)| Map::from_chunks(*index as u16, data))
+            .collect::<Result<Vec<_>, _>>()?;
+        debug_assert_eq!(maps[0].own, 0);
+
+        let mut parent_indices = maps
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(i, map)| (i, map.parent as usize))
+            .collect::<Vec<_>>();
+        parent_indices.sort_by_key(|(i, _)| order[*i]);
+        for (i, parent) in parent_indices {
+            maps[parent].children.push(i as u16);
+        }
+
+        Ok(Self { maps })
     }
 }

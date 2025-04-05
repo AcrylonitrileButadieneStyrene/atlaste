@@ -2,7 +2,7 @@ use nom::{Parser, sequence::terminated};
 
 pub(crate) const HEADER: &[u8] = b"LcfSaveData";
 
-#[derive(serde::Serialize, serde::Deserialize, derive_builder::Builder)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
 pub struct LcfSaveData {}
 
 impl From<LcfSaveDataBuilderError> for crate::Error {

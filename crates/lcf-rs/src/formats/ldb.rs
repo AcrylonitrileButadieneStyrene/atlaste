@@ -2,7 +2,7 @@ use nom::{Parser, sequence::terminated};
 
 pub(crate) const HEADER: &[u8] = b"LcfDataBase";
 
-#[derive(serde::Serialize, serde::Deserialize, derive_builder::Builder)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
 pub struct LcfDataBase {}
 
 impl From<LcfDataBaseBuilderError> for crate::Error {

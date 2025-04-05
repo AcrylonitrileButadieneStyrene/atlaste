@@ -4,7 +4,7 @@ use nom::{
 
 pub(crate) const HEADER: &[u8] = b"LcfMapUnit";
 
-#[derive(serde::Serialize, serde::Deserialize, derive_builder::Builder)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
 pub struct LcfMapUnit {
     #[builder(default = 1)]
     pub chipset: u32,
