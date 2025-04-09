@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
-pub enum Encoding {
+pub enum CodePage {
     #[default]
     Ascii,
     Eastern,
@@ -10,7 +10,7 @@ pub enum Encoding {
     Big5,
 }
 
-impl Encoding {
+impl CodePage {
     pub const fn to_str(self) -> &'static str {
         match self {
             Self::Ascii => "West European (ASCII)",
@@ -32,5 +32,5 @@ impl Encoding {
     }
 }
 
-#[derive(Default, Event, Resource)]
-pub struct CodePage(pub Encoding);
+#[derive(Default, Resource)]
+pub struct CurrentCodePage(pub CodePage);

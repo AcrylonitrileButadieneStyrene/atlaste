@@ -1,4 +1,5 @@
 #![feature(lock_value_accessors)]
+#![feature(let_chains)]
 #![forbid(unsafe_code)]
 #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
@@ -6,6 +7,7 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_sign_loss)]
+#![allow(clippy::type_complexity)]
 #![allow(dead_code)]
 
 mod app;

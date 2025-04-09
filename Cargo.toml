@@ -19,10 +19,13 @@ lto = "fat"
 panic = "abort"
 
 [dependencies]
+anyhow = "*"
+autodefault = "2.0.0"
 bevy = "0.15.3"
-bevy_egui = "0.33.0"
-encoding_rs = "0.8.35"
-rfd = "0.15.3"
+bevy_asset_loader = "0.22"
+bevy_simple_text_input = "0.10"
+encoding_rs = "0.8"
+rfd = "0.15"
 thiserror = "2.0"
 
 [dependencies.bevy_ecs_tilemap]
@@ -34,7 +37,7 @@ version = "4.5"
 features = ["derive"]
 
 [dependencies.lcf-rs]
-path="./crates/lcf-rs"
+path = "./crates/lcf-rs"
 
 [dependencies.log]
 version = "*"

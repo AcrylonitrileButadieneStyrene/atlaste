@@ -1,4 +1,7 @@
 use bevy::{asset::AssetLoader, prelude::*};
+use bevy_asset_loader::prelude::*;
+
+use crate::state::GameState;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
@@ -9,20 +12,21 @@ impl bevy::prelude::Plugin for Plugin {
             .init_asset_loader::<DataBaseLoader>()
             .init_asset_loader::<MapTreeLoader>()
             .init_asset_loader::<MapUnitLoader>()
-            .add_systems(
-                Startup,
-                retrigger_load.run_if(resource_exists::<crate::app::GameDir>),
-            )
-            .add_observer(load_game)
-            .add_observer(on_asset_load);
+            .add_loading_state(
+                LoadingState::new(GameState::Loading)
+                    .continue_to_state(GameState::Loaded)
+                    .load_collection::<GameAssets>(),
+            );
     }
 }
 
-#[derive(Event, Resource)]
-pub struct DataBaseHandle(pub Handle<DataBaseAsset>);
-
-#[derive(Event, Resource)]
-pub struct MapTreeHandle(pub Handle<MapTreeAsset>);
+#[derive(AssetCollection, Resource)]
+pub struct GameAssets {
+    #[asset(key = "database")]
+    pub database: Handle<DataBaseAsset>,
+    #[asset(key = "map_tree")]
+    pub map_tree: Handle<MapTreeAsset>,
+}
 
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {
@@ -55,6 +59,16 @@ macro_rules! loader {
     };
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum LcfAssetLoaderError {
+    #[error("IO error: {0:?}")]
+    IO(#[from] std::io::Error),
+    #[error("Parse error: {0:?}")]
+    Parse(#[from] lcf_rs::nom::Err<lcf_rs::nom::error::Error<Vec<u8>>>),
+    #[error("Build error: {0:?}")]
+    Build(#[from] lcf_rs::Error),
+}
+
 #[derive(Asset, Debug, TypePath)]
 pub struct DataBaseAsset(pub lcf_rs::LcfDataBase);
 loader!(DataBaseLoader, DataBaseAsset, lcf_rs::LcfDataBase, ("ldb"));
@@ -66,34 +80,3 @@ loader!(MapTreeLoader, MapTreeAsset, lcf_rs::LcfMapTree, ("lmt"));
 #[derive(Asset, Debug, TypePath)]
 pub struct MapUnitAsset(pub lcf_rs::LcfMapUnit);
 loader!(MapUnitLoader, MapUnitAsset, lcf_rs::LcfMapUnit, ("lmu"));
-
-#[derive(Debug, thiserror::Error)]
-pub enum LcfAssetLoaderError {
-    #[error("IO error: {0:?}")]
-    IO(#[from] std::io::Error),
-    #[error("Parse error: {0:?}")]
-    Parse(#[from] lcf_rs::nom::Err<lcf_rs::nom::error::Error<Vec<u8>>>),
-    #[error("Build error: {0:?}")]
-    Build(#[from] lcf_rs::Error),
-}
-
-pub fn retrigger_load(mut commands: Commands, game_dir: Res<crate::app::GameDir>) {
-    commands.trigger(game_dir.clone());
-}
-
-pub fn load_game(
-    trigger: Trigger<crate::app::GameDir>,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-    commands.insert_resource(DataBaseHandle(
-        asset_server.load(trigger.0.join("RPG_RT.ldb")),
-    ));
-    commands.insert_resource(MapTreeHandle(
-        asset_server.load(trigger.0.join("RPG_RT.lmt")),
-    ));
-}
-
-pub fn on_asset_load(trigger: Trigger<AssetEvent<DataBaseAsset>>) {
-    dbg!(trigger);
-}
