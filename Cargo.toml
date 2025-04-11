@@ -25,6 +25,7 @@ bevy = "0.15.3"
 bevy_asset_loader = "0.22"
 bevy_simple_text_input = "0.10"
 encoding_rs = "0.8"
+itertools = "0.14"
 rfd = "0.15"
 thiserror = "2.0"
 

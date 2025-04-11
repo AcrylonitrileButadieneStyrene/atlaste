@@ -30,8 +30,15 @@ impl LcfSaveData {
         Ok((input, Self::from_chunks(chunks)))
     }
 
-    pub(crate) fn from_chunks(_chunks: Vec<crate::lcf::Chunk<'_>>) -> Result<Self, crate::Error> {
+    pub(crate) fn from_chunks(chunks: Vec<crate::lcf::Chunk<'_>>) -> Result<Self, crate::Error> {
         let builder = LcfSaveDataBuilder::create_empty();
+
+        for (id, _data) in chunks {
+            match id {
+                _ => log::info!("Unrecognized ID {id} in LSD"),
+            }
+        }
+
         builder.build().map_err(crate::Error::from)
     }
 }

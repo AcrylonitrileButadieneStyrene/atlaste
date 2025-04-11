@@ -3,7 +3,7 @@ use crate::lmu::read_number_handled;
 #[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
 pub struct Map {
     pub name: Vec<u8>,
-    pub own: u16,
+    pub id: u16,
     #[builder(default)]
     pub parent: u16,
 
@@ -24,7 +24,7 @@ impl From<MapBuilderError> for crate::Error {
 impl Map {
     pub(crate) fn from_chunks(id: u16, chunks: &[crate::lcf::Chunk]) -> Result<Self, crate::Error> {
         let mut builder = MapBuilder::create_empty();
-        builder.own(id);
+        builder.id(id);
 
         for (id, data) in chunks {
             match id {

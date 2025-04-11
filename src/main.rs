@@ -11,6 +11,7 @@
 #![allow(dead_code)]
 
 mod app;
+mod editor;
 mod fonts;
 mod lcf_asset_loader;
 mod state;

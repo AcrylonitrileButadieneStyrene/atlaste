@@ -20,7 +20,7 @@ pub fn setup(mut commands: Commands, slots: Res<super::Slots>, fonts: Res<crate:
                     *visibility = Visibility::Inherited;
                 } else {
                     log::error!("Map tree entity or visibility missing");
-                };
+                }
             },
         );
 }

@@ -113,8 +113,8 @@ pub fn drag(trigger: Trigger<Pointer<Drag>>, parent: Query<&Parent>, mut popup: 
         return;
     };
 
-    popup.0 = popup.0 + trigger.delta.x;
-    popup.1 = popup.1 + trigger.delta.y;
+    popup.0 += trigger.delta.x;
+    popup.1 += trigger.delta.y;
 }
 
 pub fn propagate(

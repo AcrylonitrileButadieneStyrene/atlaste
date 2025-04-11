@@ -41,7 +41,7 @@ pub fn setup(
                 width: Val::Percent(100.),
                 ..Default::default()
             },
-            bevy_simple_text_input::TextInput::default(),
+            bevy_simple_text_input::TextInput,
             bevy_simple_text_input::TextInputSettings {
                 retain_on_submit: true,
                 ..Default::default()
@@ -64,7 +64,7 @@ pub fn setup(
                 if let Ok(mut inactive) = query.get_mut(trigger.entity()) {
                     inactive.0 = false;
                 } else {
-                    log::warn!("Unable to deactivate text input (unreachable)")
+                    log::warn!("Unable to deactivate text input (unreachable)");
                 }
             },
         )
@@ -101,6 +101,7 @@ fn recurse(
     depth: usize,
 ) {
     let current = &map_tree[current];
+    let id = current.id;
 
     commands
         .spawn((
@@ -114,11 +115,14 @@ fn recurse(
             },
             Text::default(),
             TextFont::from_font_size(FONT_SIZE),
-            Entry(current.own, current.name.clone()),
+            Entry(id, current.name.clone()),
         ))
+        .observe(move |_: Trigger<Pointer<Click>>, mut commands: Commands| {
+            commands.trigger(crate::editor::map_view::Add(id));
+        })
         .set_parent(parent);
 
-    for child in current.children.iter() {
+    for child in &current.children {
         recurse(commands, map_tree, parent, *child as usize, depth + 1);
     }
 }
@@ -138,6 +142,7 @@ pub fn redraw(
     names
         .par_iter_mut()
         .for_each(|(mut text, mut text_font, entry)| {
+            // TODO: if the name doesn't include its map id, prepend it.
             text.0 = encoding.decode(&entry.1).0.to_string();
             text_font.font = font.clone();
         });

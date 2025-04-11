@@ -61,7 +61,7 @@ fn scroll(
         };
 
         for (_, pointer_map) in hover.iter() {
-            for (entity, _) in pointer_map.iter() {
+            for (entity, _) in pointer_map {
                 if let Ok(mut scroll_position) = position.get_mut(*entity) {
                     scroll_position.offset_y -= dy;
                 }

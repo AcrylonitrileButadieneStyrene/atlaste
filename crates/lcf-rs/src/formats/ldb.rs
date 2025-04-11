@@ -1,9 +1,13 @@
 use nom::{Parser, sequence::terminated};
 
+use super::structs::chipset::ChipSet;
+
 pub(crate) const HEADER: &[u8] = b"LcfDataBase";
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
-pub struct LcfDataBase {}
+pub struct LcfDataBase {
+    pub chipsets: Vec<ChipSet>,
+}
 
 impl From<LcfDataBaseBuilderError> for crate::Error {
     fn from(value: LcfDataBaseBuilderError) -> Self {
@@ -30,8 +34,22 @@ impl LcfDataBase {
         Ok((input, Self::from_chunks(chunks)))
     }
 
-    pub(crate) fn from_chunks(_chunks: Vec<crate::lcf::Chunk<'_>>) -> Result<Self, crate::Error> {
-        let builder = LcfDataBaseBuilder::create_empty();
+    pub(crate) fn from_chunks(chunks: Vec<crate::lcf::Chunk<'_>>) -> Result<Self, crate::Error> {
+        let mut builder = LcfDataBaseBuilder::create_empty();
+
+        for (id, data) in chunks {
+            match id {
+                20 => drop(
+                    builder.chipsets(
+                        ChipSet::from_chunks_2d(data)
+                            .map_err(|_| crate::Error::Parse)?
+                            .1?,
+                    ),
+                ),
+                _ => log::info!("Unrecognized ID {id} in LDB"),
+            }
+        }
+
         builder.build().map_err(crate::Error::from)
     }
 }

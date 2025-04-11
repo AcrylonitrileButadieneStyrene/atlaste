@@ -52,7 +52,7 @@ impl LcfMapTree {
             .iter()
             .map(|(index, data)| Map::from_chunks(*index as u16, data))
             .collect::<Result<Vec<_>, _>>()?;
-        debug_assert_eq!(maps[0].own, 0);
+        debug_assert_eq!(maps[0].id, 0);
 
         let mut parent_indices = maps
             .iter()

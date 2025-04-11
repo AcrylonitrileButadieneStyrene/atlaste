@@ -9,6 +9,7 @@ pub fn run(mut args: crate::Args) {
             TilemapPlugin,
             bevy_simple_text_input::TextInputPlugin,
             crate::state::Plugin,
+            crate::editor::Plugin,
             crate::ui::Plugin,
             crate::lcf_asset_loader::Plugin,
         ))

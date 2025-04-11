@@ -7,13 +7,13 @@ pub(crate) const HEADER: &[u8] = b"LcfMapUnit";
 #[derive(Debug, serde::Serialize, serde::Deserialize, derive_builder::Builder)]
 pub struct LcfMapUnit {
     #[builder(default = 1)]
-    pub chipset: u32,
+    pub chipset: u16,
     #[builder(default = 20)]
     pub width: u32,
     #[builder(default = 15)]
     pub height: u32,
-    pub lower_map: Vec<u16>,
-    pub upper_map: Vec<u16>,
+    pub lower: Vec<u16>,
+    pub upper: Vec<u16>,
 }
 
 impl From<LcfMapUnitBuilderError> for crate::Error {
@@ -46,16 +46,29 @@ impl LcfMapUnit {
 
         for (id, data) in chunks {
             match id {
-                1 => drop(builder.chipset(read_number_handled(data)? as u32)),
+                1 => drop(builder.chipset(read_number_handled(data)? as u16)),
                 2 => drop(builder.width(read_number_handled(data)? as u32)),
                 3 => drop(builder.height(read_number_handled(data)? as u32)),
-                71 => drop(builder.lower_map(parse_layer(data)?)),
-                72 => drop(builder.upper_map(parse_layer(data)?)),
-                _ => eprintln!("Unrecognized ID {id} in LMU"),
+                71 => drop(builder.lower(parse_layer(data)?)),
+                72 => drop(builder.upper(parse_layer(data)?)),
+                _ => log::info!("Unrecognized ID {id} in LMU"),
             }
         }
 
         builder.build().map_err(crate::Error::from)
+    }
+
+    pub fn convert_layer_to_chipset_index(id: usize) -> usize {
+        match id {
+            // ground layer unanimated
+            5000..=5143 => {
+                let index = id - 5000;
+                let col = index % 6;
+                let base = 12 + (index / 96) * 6;
+                (index - col) * 5 + col + base
+            }
+            _ => 0, // todo
+        }
     }
 }
 
