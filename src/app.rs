@@ -14,8 +14,7 @@ pub fn run(mut args: crate::Args) {
             crate::lcf_asset_loader::Plugin,
         ))
         .init_resource::<crate::state::CurrentCodePage>()
-        .add_systems(PreStartup, crate::fonts::init)
-        .add_systems(Startup, startup);
+        .add_systems(PreStartup, crate::fonts::init);
 
     // Taking it out of the field so it cannot accidentally be used later
     if let Some(game_dir) = args.game_dir.take() {
@@ -35,14 +34,11 @@ fn default_plugins() -> bevy::app::PluginGroupBuilder {
                 resize_constraints: WindowResizeConstraints { min_width: 400.0 },
             }),
         })
+        .set(ImagePlugin::default_nearest())
         .set(bevy::log::LogPlugin {
             #[cfg(debug_assertions)]
             level: bevy::log::Level::INFO,
             #[cfg(not(debug_assertions))]
             level: bevy::log::Level::WARN,
         })
-}
-
-fn startup(mut commands: Commands) {
-    commands.spawn(Camera2d);
 }

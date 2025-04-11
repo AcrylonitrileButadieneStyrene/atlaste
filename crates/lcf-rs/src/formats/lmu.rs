@@ -58,14 +58,15 @@ impl LcfMapUnit {
         builder.build().map_err(crate::Error::from)
     }
 
-    pub fn convert_layer_to_chipset_index(id: usize) -> usize {
+    #[must_use]
+    pub const fn convert_layer_to_chipset_index(id: usize) -> usize {
         match id {
             // ground layer unanimated
             5000..=5143 => {
                 let index = id - 5000;
                 let col = index % 6;
                 let base = 12 + (index / 96) * 6;
-                (index - col) * 5 + col + base
+                (index % 96 - col) * 5 + col + base
             }
             _ => 0, // todo
         }

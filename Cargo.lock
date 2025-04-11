@@ -455,6 +455,7 @@ dependencies = [
  "bevy",
  "bevy_asset_loader",
  "bevy_ecs_tilemap",
+ "bevy_pancam",
  "bevy_simple_text_input",
  "clap",
  "encoding_rs",
@@ -1066,6 +1067,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "226f663401069ded4352ed1472a85bb1f43e2b7305d6a50e53a4f6508168e380"
 dependencies = [
  "glam",
+]
+
+[[package]]
+name = "bevy_pancam"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97951c9d2d2e52c942b883244a6b3586d5e55add303ed2c0dba67af4a9b16d28"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
