@@ -13,6 +13,7 @@
 mod app;
 mod editor;
 mod fonts;
+mod http_asset_loader;
 mod lcf_asset_loader;
 mod state;
 mod ui;

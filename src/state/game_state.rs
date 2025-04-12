@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{asset::AssetPath, prelude::*};
 use bevy_asset_loader::prelude::*;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, States)]
@@ -12,6 +12,18 @@ pub enum GameState {
 #[derive(Resource)]
 pub struct GamePath(pub std::path::PathBuf);
 
+impl GamePath {
+    pub fn with<'a>(
+        &'a self,
+        transform: impl FnOnce(&std::path::Path) -> std::path::PathBuf,
+    ) -> String {
+        transform(&self.0)
+            .to_string_lossy()
+            .to_string()
+            .replace("\\", "/")
+    }
+}
+
 pub fn load(
     game_path: Res<GamePath>,
     mut next_state: ResMut<NextState<crate::state::GameState>>,
@@ -19,21 +31,33 @@ pub fn load(
 ) {
     dynamic.register_asset(
         "database",
-        Box::new(DynamicAssetPathbuf(game_path.0.join("RPG_RT.ldb"))),
+        Box::new(Dynamic(game_path.with(|p| p.join("RPG_RT.ldb")).into())),
     );
     dynamic.register_asset(
         "map_tree",
-        Box::new(DynamicAssetPathbuf(game_path.0.join("RPG_RT.lmt"))),
+        Box::new(Dynamic(game_path.with(|p| p.join("RPG_RT.lmt")).into())),
     );
     next_state.set(GameState::Loading);
 }
 
 #[derive(Debug)]
-struct DynamicAssetPathbuf(std::path::PathBuf);
+struct Dynamic<'a>(pub AssetPath<'a>);
 
-impl DynamicAsset for DynamicAssetPathbuf {
+// impl<'a> Dynamic<'a> {
+//     fn new(path: std::path::PathBuf) -> Box<Self> {
+//         if let Ok(url) = url::Url::parse(&path.to_string_lossy()) {
+//             let scheme = url.scheme().to_string();
+//             let without_scheme = url[url::Position::BeforeHost..].to_string();
+//             Box::new(Self(AssetPath::from(without_scheme).with_source(scheme)))
+//         } else {
+//             Box::new(Self(path.into()))
+//         }
+//     }
+// }
+
+impl<'a> DynamicAsset for Dynamic<'a> {
     fn load(&self, asset_server: &AssetServer) -> Vec<UntypedHandle> {
-        vec![asset_server.load_untyped(self.0.clone()).untyped()]
+        vec![asset_server.load_untyped(&self.0).untyped()]
     }
 
     fn build(&self, world: &mut World) -> Result<DynamicAssetType, anyhow::Error> {
@@ -42,7 +66,7 @@ impl DynamicAsset for DynamicAssetPathbuf {
         };
 
         Ok(DynamicAssetType::Single(
-            asset_server.get_handle_untyped(self.0.clone()).unwrap(),
+            asset_server.get_handle_untyped(&self.0).unwrap(),
         ))
     }
 }

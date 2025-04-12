@@ -1,20 +1,24 @@
 use bevy::prelude::*;
-use bevy_ecs_tilemap::prelude::*;
 
 pub fn run(mut args: crate::Args) {
     let mut app = App::new();
-    app.insert_resource(bevy::winit::WinitSettings::desktop_app())
-        .add_plugins((
-            default_plugins(),
-            TilemapPlugin,
-            bevy_simple_text_input::TextInputPlugin,
-            crate::state::Plugin,
-            crate::editor::Plugin,
-            crate::ui::Plugin,
-            crate::lcf_asset_loader::Plugin,
-        ))
-        .init_resource::<crate::state::CurrentCodePage>()
-        .add_systems(PreStartup, crate::fonts::init);
+    app.register_asset_source(
+        "https",
+        bevy::asset::io::AssetSource::build()
+            .with_reader(|| Box::new(crate::http_asset_loader::HttpAssetLoader)),
+    )
+    .insert_resource(bevy::winit::WinitSettings::desktop_app())
+    .add_plugins((
+        default_plugins(),
+        bevy_ecs_tilemap::TilemapPlugin,
+        bevy_simple_text_input::TextInputPlugin,
+        crate::state::Plugin,
+        crate::editor::Plugin,
+        crate::ui::Plugin,
+        crate::lcf_asset_loader::Plugin,
+    ))
+    .init_resource::<crate::state::CurrentCodePage>()
+    .add_systems(PreStartup, crate::fonts::init);
 
     // Taking it out of the field so it cannot accidentally be used later
     if let Some(game_dir) = args.game_dir.take() {
