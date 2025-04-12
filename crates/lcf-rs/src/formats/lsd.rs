@@ -34,6 +34,7 @@ impl LcfSaveData {
         let builder = LcfSaveDataBuilder::create_empty();
 
         for (id, _data) in chunks {
+            #[allow(clippy::match_single_binding)]
             match id {
                 _ => log::info!("Unrecognized ID {id} in LSD"),
             }

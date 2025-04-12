@@ -3,6 +3,8 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
+#![warn(clippy::cargo)]
+#![allow(clippy::multiple_crate_versions)]
 #![allow(clippy::needless_pass_by_value)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]

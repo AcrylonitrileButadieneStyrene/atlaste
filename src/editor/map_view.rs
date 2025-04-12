@@ -36,7 +36,6 @@ pub fn process_loading(
     mut commands: Commands,
     query: Query<(Entity, &MapUnit), With<Loading>>,
     asset_server: Res<AssetServer>,
-    mut loaded_events: EventWriter<Loaded>,
 ) {
     query
         .iter()
@@ -45,7 +44,7 @@ pub fn process_loading(
             LoadState::Loaded => {
                 if let Some(mut entity) = commands.get_entity(entity_id) {
                     entity.remove::<Loading>();
-                    loaded_events.send(Loaded(entity_id));
+                    commands.trigger(Loaded(entity_id));
                 }
             }
             LoadState::Failed(err) => {
@@ -57,69 +56,71 @@ pub fn process_loading(
 const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
 const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 16.0, y: 16.0 };
 
-// TODO: break this up into multiple systems
+// This runs very infrequently (when a map is added by the user)
+// So it's more efficient to run it as an observer than an event reader
+// Observers do not parallelize at all, they have exclusive world access
+// So this system shall be oversized.
+#[allow(clippy::too_many_arguments)]
 pub fn process_loaded(
+    trigger: Trigger<Loaded>,
     mut commands: Commands,
-    mut loaded: EventReader<Loaded>,
     map_unit: Query<&MapUnit>,
     map_units: Res<Assets<MapUnitAsset>>,
-
     asset_server: Res<AssetServer>,
-
     game_assets: Res<GameAssets>,
     databases: Res<Assets<DataBaseAsset>>,
     code_page: Res<CurrentCodePage>,
     game_path: Res<GamePath>,
 ) {
-    for Loaded(entity) in loaded.read() {
-        let map = &map_unit
-            .get(*entity)
-            .ok()
-            .and_then(|map_unit| map_units.get(map_unit.0.id()))
-            .unwrap()
-            .0;
+    let entity = trigger.0;
 
-        let database = databases.get(game_assets.database.id()).unwrap();
-        let Some(chipset) = database.0.chipsets[map.chipset as usize - 1].file.as_ref() else {
-            log::warn!("Map is missing a chipset");
-            return;
+    let map = &map_unit
+        .get(entity)
+        .ok()
+        .and_then(|map_unit| map_units.get(map_unit.0.id()))
+        .unwrap()
+        .0;
+
+    let database = databases.get(game_assets.database.id()).unwrap();
+    let Some(chipset) = database.0.chipsets[map.chipset as usize - 1].file.as_ref() else {
+        log::warn!("Map is missing a chipset");
+        return;
+    };
+    let file = code_page.0.to_encoding().decode(chipset).0.to_string();
+
+    let texture =
+        asset_server.load::<Image>(game_path.with(|p| p.join("ChipSet/").join(file + ".png"))); // TODO: it can be a .bmp too
+    let size = TilemapSize::new(map.width, map.height);
+    let mut storage = TileStorage::empty(size);
+
+    // TODO: spawn the upper layer
+    for (x, y) in itertools::iproduct!(0..size.x, 0..size.y) {
+        let tile_pos = TilePos {
+            x,
+            y: size.y - y - 1,
         };
-        let file = code_page.0.to_encoding().decode(chipset).0.to_string();
-
-        let texture =
-            asset_server.load::<Image>(game_path.with(|p| p.join("ChipSet/").join(file + ".png"))); // TODO: it can be a .bmp too
-        let size = TilemapSize::new(map.width, map.height);
-        let mut storage = TileStorage::empty(size);
-
-        // TODO: spawn the upper layer
-        for (x, y) in itertools::iproduct!(0..size.x, 0..size.y) {
-            let tile_pos = TilePos {
-                x,
-                y: size.y - y - 1,
-            };
-            let tile_entity = commands
-                .spawn(TileBundle {
-                    position: tile_pos,
-                    tilemap_id: TilemapId(*entity),
-                    texture_index: TileTextureIndex(
-                        lcf_rs::LcfMapUnit::convert_layer_to_chipset_index(
-                            map.lower[(y * size.x + x) as usize] as usize,
-                        ) as u32,
-                    ),
-                    ..Default::default()
-                })
-                .id();
-            storage.set(&tile_pos, tile_entity);
-        }
-
-        commands.entity(*entity).insert(TilemapBundle {
-            tile_size: TILE_SIZE,
-            grid_size: GRID_SIZE,
-            map_type: TilemapType::Square,
-            texture: TilemapTexture::Single(texture),
-            size,
-            storage,
-            ..Default::default()
-        });
+        let tile_entity = commands
+            .spawn(TileBundle {
+                position: tile_pos,
+                tilemap_id: TilemapId(entity),
+                texture_index: TileTextureIndex(
+                    lcf_rs::LcfMapUnit::convert_layer_to_chipset_index(
+                        map.lower[(y * size.x + x) as usize] as usize,
+                    ) as u32,
+                ),
+                ..Default::default()
+            })
+            .id();
+        storage.set(&tile_pos, tile_entity);
     }
+
+    commands.entity(entity).insert(TilemapBundle {
+        tile_size: TILE_SIZE,
+        grid_size: GRID_SIZE,
+        map_type: TilemapType::Square,
+        texture: TilemapTexture::Single(texture),
+        size,
+        storage,
+        ..Default::default()
+    });
 }

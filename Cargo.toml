@@ -6,6 +6,12 @@ members = ["crates/*"]
 name = "atlaste"
 version = "0.1.0"
 edition = "2024"
+description = "An interactive mapping tool for RPG Maker 2000 games."
+repository = "https://github.com/AcrylonitrileButadieneStyrene/atlaste"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["rpgmaker2000", "r2k"]
+categories = ["graphics"]
 
 [profile.dev]
 opt-level = 1
@@ -20,25 +26,28 @@ panic = "abort"
 
 [dependencies]
 anyhow = "*"
-autodefault = "2.0.0"
+autodefault = "2.0"
 bevy = "0.15.3"
-bevy_asset_loader = "0.22.0"
-bevy_pancam = "0.17.0"
+bevy_asset_loader = "0.22"
+bevy_pancam = "0.17"
 bevy_simple_text_input = "0.10"
-ehttp = { version = "0.5.0", features = ["native-async"] }
 encoding_rs = "0.8"
 itertools = "0.14"
 rfd = "0.15"
 thiserror = "2.0"
-url = "2.5.4"
+url = "2.5"
 
 [dependencies.bevy_ecs_tilemap]
-version = "0.15.0"
+version = "0.15"
 features = ["atlas"]
 
 [dependencies.clap]
 version = "4.5"
 features = ["derive"]
+
+[dependencies.ehttp]
+version = "0.5"
+features = ["native-async"]
 
 [dependencies.lcf-rs]
 path = "./crates/lcf-rs"

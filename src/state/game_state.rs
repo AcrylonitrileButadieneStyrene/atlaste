@@ -13,14 +13,14 @@ pub enum GameState {
 pub struct GamePath(pub std::path::PathBuf);
 
 impl GamePath {
-    pub fn with<'a>(
-        &'a self,
+    pub fn with(
+        &'_ self,
         transform: impl FnOnce(&std::path::Path) -> std::path::PathBuf,
     ) -> String {
         transform(&self.0)
             .to_string_lossy()
             .to_string()
-            .replace("\\", "/")
+            .replace('\\', "/")
     }
 }
 
@@ -55,7 +55,7 @@ struct Dynamic<'a>(pub AssetPath<'a>);
 //     }
 // }
 
-impl<'a> DynamicAsset for Dynamic<'a> {
+impl DynamicAsset for Dynamic<'_> {
     fn load(&self, asset_server: &AssetServer) -> Vec<UntypedHandle> {
         vec![asset_server.load_untyped(&self.0).untyped()]
     }

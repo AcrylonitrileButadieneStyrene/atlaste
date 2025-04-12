@@ -9,13 +9,8 @@ impl bevy::prelude::Plugin for Plugin {
         app.add_plugins(bevy_pancam::PanCamPlugin)
             .add_event::<map_view::Loaded>()
             .add_systems(Startup, camera::setup)
-            .add_systems(
-                Update,
-                (
-                    map_view::process_loading,
-                    map_view::process_loaded.run_if(on_event::<map_view::Loaded>),
-                ),
-            )
-            .add_observer(map_view::on_add);
+            .add_systems(Update, map_view::process_loading)
+            .add_observer(map_view::on_add)
+            .add_observer(map_view::process_loaded);
     }
 }
