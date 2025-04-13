@@ -26,7 +26,7 @@ pub fn update(
                 Collapsable::Expanded => Collapsable::Collapsed,
             };
         } else {
-            log::warn!("Collapsable not direct parent of header");
+            log::error!("Collapsable not direct parent of header");
         }
     });
 }

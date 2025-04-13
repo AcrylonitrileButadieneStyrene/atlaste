@@ -121,10 +121,7 @@ pub fn propagate(
     mut query: Query<(&mut Node, &Popup), Changed<Popup>>,
     window: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let Ok(window) = window.get_single() else {
-        log::error!("Primary windows != 1");
-        return;
-    };
+    let window = window.single();
 
     query.par_iter_mut().for_each(|(mut node, popup)| {
         let convert = |x| if let Val::Px(x) = x { x } else { 0.0 };

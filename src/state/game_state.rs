@@ -61,12 +61,10 @@ impl DynamicAsset for Dynamic<'_> {
     }
 
     fn build(&self, world: &mut World) -> Result<DynamicAssetType, anyhow::Error> {
-        let Some(asset_server) = world.get_resource::<AssetServer>() else {
-            anyhow::bail!("AssetServer not found");
-        };
-
-        Ok(DynamicAssetType::Single(
-            asset_server.get_handle_untyped(&self.0).unwrap(),
-        ))
+        world
+            .resource::<AssetServer>()
+            .get_handle_untyped(&self.0)
+            .map(DynamicAssetType::Single)
+            .ok_or_else(|| panic!())
     }
 }

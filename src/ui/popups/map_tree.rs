@@ -61,11 +61,7 @@ pub fn setup(
         .observe(
             |trigger: Trigger<Pointer<Click>>,
              mut query: Query<&mut bevy_simple_text_input::TextInputInactive>| {
-                if let Ok(mut inactive) = query.get_mut(trigger.entity()) {
-                    inactive.0 = false;
-                } else {
-                    log::warn!("Unable to deactivate text input (unreachable)");
-                }
+                query.get_mut(trigger.entity()).unwrap().0 = false;
             },
         )
         .set_parent(parent);
@@ -87,10 +83,7 @@ pub fn setup(
 }
 
 pub fn destroy(mut commands: Commands, popups: Res<super::Popups>) {
-    commands
-        .get_entity(popups.map_tree.0)
-        .unwrap()
-        .despawn_descendants();
+    commands.entity(popups.map_tree.0).despawn_descendants();
 }
 
 fn recurse(
