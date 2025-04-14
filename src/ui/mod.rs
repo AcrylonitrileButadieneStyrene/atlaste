@@ -10,20 +10,12 @@ use bevy::{
     prelude::*,
 };
 
-use crate::state::{CurrentCodePage, GamePath, GameState};
+use crate::state::{GamePath, GameState};
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((themes::Plugin, popups::Plugin))
-            .add_systems(
-                Startup,
-                ((
-                    layout::setup,
-                    (layout::toolbar::setup, layout::settings::setup),
-                )
-                    .chain(),),
-            )
+        app.add_plugins((themes::Plugin, layout::Plugin, popups::Plugin))
             .add_systems(
                 OnEnter(GameState::None),
                 start::create.run_if(not(resource_exists::<GamePath>)),
@@ -36,8 +28,6 @@ impl bevy::prelude::Plugin for Plugin {
                     deselect_text_inputs,
                     (elements::collapsable::update, elements::collapsable::apply).chain(),
                     elements::popup::propagate,
-                    layout::settings::highlight_codepage
-                        .run_if(resource_exists_and_changed::<CurrentCodePage>),
                 ),
             );
     }

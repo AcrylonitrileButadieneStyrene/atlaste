@@ -17,7 +17,7 @@ pub fn setup(mut commands: Commands, slots: Res<super::Slots>, fonts: Res<crate:
             },
             Collapsable::Collapsed,
         ))
-        .set_parent(slots.settings)
+        .set_parent(slots.right)
         .with_children(|children| {
             let font = TextFont::from_font(fonts.default.clone()).with_font_size(12.);
 

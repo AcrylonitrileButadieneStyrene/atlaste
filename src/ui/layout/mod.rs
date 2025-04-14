@@ -1,15 +1,31 @@
-pub mod settings;
-pub mod toolbar;
+mod settings;
+mod toolbar;
+mod tools;
 
+use crate::state::CurrentCodePage;
 use bevy::prelude::*;
+
+pub struct Plugin;
+impl bevy::prelude::Plugin for Plugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Startup,
+            ((setup, (toolbar::setup, settings::setup, tools::setup)).chain(),),
+        )
+        .add_systems(
+            Update,
+            settings::highlight_codepage.run_if(resource_exists_and_changed::<CurrentCodePage>),
+        );
+    }
+}
 
 #[derive(Resource)]
 pub struct Slots {
-    pub toolbar: Entity,
-    pub settings: Entity,
-    pub content: Entity,
-    pub properties: Entity,
-    pub logs: Entity,
+    pub top: Entity,
+    pub left: Entity,
+    pub center: Entity,
+    pub right: Entity,
+    pub bottom: Entity,
 }
 
 pub fn setup(mut commands: Commands) {
@@ -29,7 +45,7 @@ pub fn setup(mut commands: Commands) {
         ))
         .id();
 
-    let toolbar = commands
+    let top = commands
         .spawn((
             Node {
                 border: UiRect::bottom(Val::Px(1.0)),
@@ -55,12 +71,11 @@ pub fn setup(mut commands: Commands) {
         .set_parent(root)
         .id();
 
-    let settings = commands
+    let left = commands
         .spawn((
             Node {
-                flex_direction: FlexDirection::Column,
                 border: UiRect::right(Val::Px(1.0)),
-                width: Val::Px(200.0),
+                flex_direction: FlexDirection::Column,
                 ..Default::default()
             },
             background,
@@ -69,7 +84,7 @@ pub fn setup(mut commands: Commands) {
         .set_parent(horizontal)
         .id();
 
-    let content = commands
+    let center = commands
         .spawn((
             Node {
                 flex_grow: 1.0,
@@ -80,7 +95,7 @@ pub fn setup(mut commands: Commands) {
         .set_parent(horizontal)
         .id();
 
-    let properties = commands
+    let right = commands
         .spawn((
             Node {
                 border: UiRect::left(Val::Px(1.0)),
@@ -94,7 +109,7 @@ pub fn setup(mut commands: Commands) {
         .set_parent(horizontal)
         .id();
 
-    let logs = commands
+    let bottom = commands
         .spawn((
             Node {
                 border: UiRect::top(Val::Px(1.0)),
@@ -109,10 +124,10 @@ pub fn setup(mut commands: Commands) {
         .id();
 
     commands.insert_resource(Slots {
-        toolbar,
-        settings,
-        content,
-        properties,
-        logs,
+        top,
+        left,
+        center,
+        right,
+        bottom,
     });
 }

@@ -13,7 +13,7 @@ pub fn setup(mut commands: Commands, slots: Res<super::Slots>, fonts: Res<crate:
             TextFont::from_font(fonts.default.clone()).with_font_size(16.0),
             Button,
         ))
-        .set_parent(slots.toolbar)
+        .set_parent(slots.top)
         .observe(
             |_: Trigger<Pointer<Click>>, mut query: Query<&mut Visibility>, popups: Res<Popups>| {
                 if let Ok(mut visibility) = query.get_mut(popups.map_tree.0) {

@@ -27,7 +27,6 @@ panic = "abort"
 [dependencies]
 anyhow = "*"
 autodefault = "2.0"
-bevy = "0.15.3"
 bevy_asset_loader = "0.22"
 bevy_pancam = "0.17"
 bevy_simple_text_input = "0.10"
@@ -36,6 +35,27 @@ itertools = "0.14"
 rfd = "0.15"
 thiserror = "2.0"
 url = "2.5"
+
+[dependencies.bevy]
+version = "0.15.3"
+default-features = false
+features = [
+    "bevy_asset",
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_picking",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_state",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_ui_picking_backend",
+    "bevy_window",
+    "bevy_winit",
+    "default_font",
+    "multi_threaded",
+    "png",
+]
 
 [dependencies.bevy_ecs_tilemap]
 version = "0.15"
@@ -55,3 +75,7 @@ path = "./crates/lcf-rs"
 [dependencies.log]
 version = "*"
 features = ["max_level_debug", "release_max_level_warn"]
+
+[dependencies.strum]
+version = "0.27.1"
+features = ["derive"]
