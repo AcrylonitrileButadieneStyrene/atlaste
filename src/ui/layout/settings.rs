@@ -8,18 +8,25 @@ use crate::{
 #[derive(Component)]
 pub struct CodePageValue(CodePage);
 
-pub fn setup(mut commands: Commands, slots: Res<super::Slots>, fonts: Res<crate::fonts::Fonts>) {
+pub fn setup(mut commands: Commands, layout: Res<super::Layout>, fonts: Res<crate::fonts::Fonts>) {
     commands
         .spawn((
             Node {
                 flex_direction: FlexDirection::Column,
+                grid_row: GridPlacement::start(1),
+                grid_column: GridPlacement::start(3),
                 ..Default::default()
             },
+            BackgroundColor(Color::BLACK),
             Collapsable::Collapsed,
+            ChildOf(layout.root),
         ))
-        .set_parent(slots.right)
         .with_children(|children| {
-            let font = TextFont::from_font(fonts.default.clone()).with_font_size(12.);
+            let font = TextFont {
+                font: fonts.default.clone(),
+                font_size: 12.0,
+                ..Default::default()
+            };
 
             children.spawn((
                 Text::new("Code page"),
@@ -47,7 +54,7 @@ pub fn setup(mut commands: Commands, slots: Res<super::Slots>, fonts: Res<crate:
                         CodePageValue(code_page),
                     ))
                     .observe(
-                        move |_: Trigger<Pointer<Click>>, mut current: ResMut<CurrentCodePage>| {
+                        move |_: On<Pointer<Click>>, mut current: ResMut<CurrentCodePage>| {
                             current.0 = code_page;
                         },
                     );

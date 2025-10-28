@@ -11,7 +11,7 @@ impl bevy::prelude::Plugin for Plugin {
             .add_systems(
                 Update,
                 (
-                    camera::check_movement.before(bevy_pancam::PanCamSystemSet),
+                    camera::check_movement.before(bevy_pancam::PanCamSystems),
                     map_view::process_loading,
                 ),
             )

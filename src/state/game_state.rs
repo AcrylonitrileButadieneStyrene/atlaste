@@ -2,9 +2,9 @@ use bevy::{asset::AssetPath, prelude::*};
 use bevy_asset_loader::prelude::*;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, States)]
-pub enum GameState {
+pub enum GameLoadState {
     #[default]
-    None,
+    NotLoaded,
     Loading,
     Loaded,
 }
@@ -26,7 +26,7 @@ impl GamePath {
 
 pub fn load(
     game_path: Res<GamePath>,
-    mut next_state: ResMut<NextState<crate::state::GameState>>,
+    mut next_state: ResMut<NextState<crate::state::GameLoadState>>,
     mut dynamic: ResMut<DynamicAssets>,
 ) {
     dynamic.register_asset(
@@ -37,23 +37,11 @@ pub fn load(
         "map_tree",
         Box::new(Dynamic(game_path.with(|p| p.join("RPG_RT.lmt")).into())),
     );
-    next_state.set(GameState::Loading);
+    next_state.set(GameLoadState::Loading);
 }
 
 #[derive(Debug)]
 struct Dynamic<'a>(pub AssetPath<'a>);
-
-// impl<'a> Dynamic<'a> {
-//     fn new(path: std::path::PathBuf) -> Box<Self> {
-//         if let Ok(url) = url::Url::parse(&path.to_string_lossy()) {
-//             let scheme = url.scheme().to_string();
-//             let without_scheme = url[url::Position::BeforeHost..].to_string();
-//             Box::new(Self(AssetPath::from(without_scheme).with_source(scheme)))
-//         } else {
-//             Box::new(Self(path.into()))
-//         }
-//     }
-// }
 
 impl DynamicAsset for Dynamic<'_> {
     fn load(&self, asset_server: &AssetServer) -> Vec<UntypedHandle> {

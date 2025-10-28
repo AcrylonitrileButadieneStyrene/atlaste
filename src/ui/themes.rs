@@ -9,12 +9,9 @@ impl bevy::prelude::Plugin for Plugin {
         app.add_systems(Startup, startup).add_systems(
             Update,
             (
-                // Read events and put into resources
                 update,
                 // (
-                //     // Always run and setup newly added themed entities.
                 //     apply::<Added<Themed>>,
-                //     // Change all themed entities but only run when the theme has changed.
                 //     apply::<()>.run_if(resource_changed::<CurrentTheme>),
                 // ),
             )
@@ -25,18 +22,19 @@ impl bevy::prelude::Plugin for Plugin {
 
 pub fn startup(
     window: Query<(Entity, &Window), With<PrimaryWindow>>,
-    mut events: EventWriter<WindowThemeChanged>,
-) {
-    let (entity, window) = window.single();
+    mut events: MessageWriter<WindowThemeChanged>,
+) -> Result {
+    let (entity, window) = window.single()?;
     if let Some(theme) = window.window_theme {
-        events.send(WindowThemeChanged {
+        events.write(WindowThemeChanged {
             window: entity,
             theme,
         });
     }
+    Ok(())
 }
 
-pub fn update(mut _commands: Commands, mut events: EventReader<WindowThemeChanged>) {
+pub fn update(mut _commands: Commands, mut events: MessageReader<WindowThemeChanged>) {
     let Some(_event) = events.read().last() else {
         return;
     };

@@ -1,6 +1,5 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::Relationship as _, prelude::*};
 
-/// Inner false = collapsed, true = expanded
 #[derive(Component)]
 pub enum Collapsable {
     Collapsed,
@@ -12,7 +11,7 @@ pub enum Collapsable {
 pub struct CollapsableHeader;
 
 pub fn update(
-    query: Query<(&Interaction, &Parent), (With<CollapsableHeader>, Changed<Interaction>)>,
+    query: Query<(&Interaction, &ChildOf), (With<CollapsableHeader>, Changed<Interaction>)>,
     mut collapsable: Query<&mut Collapsable>,
 ) {
     query.iter().for_each(|(interaction, parent)| {

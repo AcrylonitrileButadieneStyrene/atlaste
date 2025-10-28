@@ -7,12 +7,12 @@ use crate::{
 };
 
 #[derive(Event)]
-pub struct Add(pub u16);
+pub struct Add(pub u32);
 
 #[derive(Component)]
 pub struct Loading;
 
-#[derive(Event)]
+#[derive(EntityEvent)]
 pub struct Setup(Entity);
 
 #[derive(Component)]
@@ -22,7 +22,7 @@ const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
 const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 16.0, y: 16.0 };
 
 pub fn on_add(
-    trigger: Trigger<Add>,
+    trigger: On<Add>,
     mut commands: Commands,
     game_path: Res<GamePath>,
     asset_server: Res<AssetServer>,
@@ -48,24 +48,19 @@ pub fn process_loading(
         .for_each(|(entity, map)| match asset_server.load_state(&map.0) {
             LoadState::NotLoaded | LoadState::Loading => (),
             LoadState::Loaded => {
-                let mut ent = commands.entity(entity);
-                ent.trigger(Setup(entity));
-                ent.remove::<Loading>();
+                commands.entity(entity).remove::<Loading>();
+                commands.trigger(Setup(entity));
             }
             LoadState::Failed(err) => {
                 log::error!("Failed to load map: {err:?}");
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         });
 }
 
-// This runs very infrequently (when a map is added by the user)
-// So it's more efficient to run it as an observer than an event reader
-// Observers do not parallelize at all, they have exclusive world access
-// So this system shall be oversized.
 #[allow(clippy::too_many_arguments)]
 pub fn setup_view(
-    trigger: Trigger<Setup>,
+    trigger: On<Setup>,
     mut commands: Commands,
     query: Query<&MapUnit>,
     map_units: Res<Assets<MapUnitAsset>>,
@@ -81,17 +76,14 @@ pub fn setup_view(
     let map = &map_units.get(map_unit.0.id()).unwrap().0;
 
     let database = databases.get(game_assets.database.id()).unwrap();
-    let Some(chipset) = database.0.chipsets[map.chipset as usize - 1].file.as_ref() else {
-        log::error!("Map is missing a chipset");
-        return;
-    };
+    let chipset = &database.0.chipsets[map.chipset.unwrap() as usize - 1].file;
     let file = code_page.0.to_encoding().decode(chipset).0.to_string();
     let texture =
         asset_server.load::<Image>(game_path.with(|p| p.join("ChipSet/").join(file + ".png"))); // TODO: it can be a .bmp too
     let size = TilemapSize::new(map.width, map.height);
     let mut storage = TileStorage::empty(size);
 
-    let tilemap = commands.spawn_empty().set_parent(trigger.0).id();
+    let tilemap = commands.spawn(ChildOf(trigger.0)).id();
 
     // TODO: spawn the upper layer
     for (x, y) in itertools::iproduct!(0..size.x, 0..size.y) {
@@ -103,11 +95,9 @@ pub fn setup_view(
             .spawn(TileBundle {
                 position: tile_pos,
                 tilemap_id: TilemapId(tilemap),
-                texture_index: TileTextureIndex(
-                    lcf_rs::LcfMapUnit::convert_layer_to_chipset_index(
-                        map.lower[(y * size.x + x) as usize] as usize,
-                    ) as u32,
-                ),
+                texture_index: TileTextureIndex(convert_layer_to_chipset_index(
+                    map.lower[(y * size.x + x) as usize] as usize,
+                ) as u32),
                 ..Default::default()
             })
             .id();
@@ -127,16 +117,29 @@ pub fn setup_view(
     let x = size.x as f32 * GRID_SIZE.x;
     let y = size.y as f32 * GRID_SIZE.y;
 
-    commands
-        .spawn((
-            Mesh2d(meshes.add(Rectangle::default())),
-            MeshMaterial2d(materials.add(ColorMaterial::from(Color::hsl(0., 0., 0.3)))),
-            Transform::from_translation(Vec3::new(
-                (x - GRID_SIZE.x) / 2.0,
-                (y - GRID_SIZE.y) / 2.0,
-                -1.,
-            ))
-            .with_scale(Vec3::new(x, y, 1.0)),
+    commands.spawn((
+        Mesh2d(meshes.add(Rectangle::default())),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::hsl(0., 0., 0.3)))),
+        Transform::from_translation(Vec3::new(
+            (x - GRID_SIZE.x) / 2.0,
+            (y - GRID_SIZE.y) / 2.0,
+            -1.,
         ))
-        .set_parent(trigger.0);
+        .with_scale(Vec3::new(x, y, 1.0)),
+        ChildOf(trigger.0),
+    ));
+}
+
+#[must_use]
+const fn convert_layer_to_chipset_index(id: usize) -> usize {
+    match id {
+        // ground layer unanimated
+        5000..=5143 => {
+            let index = id - 5000;
+            let col = index % 6;
+            let base = 12 + (index / 96) * 6;
+            (index % 96 - col) * 5 + col + base
+        }
+        _ => 0, // todo
+    }
 }

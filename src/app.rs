@@ -1,42 +1,40 @@
 use bevy::prelude::*;
 
-pub fn run(mut args: crate::Args) {
-    let mut app = App::new();
-    app.register_asset_source(
-        "https",
-        bevy::asset::io::AssetSource::build()
-            .with_reader(|| Box::new(crate::http_asset_loader::HttpAssetLoader)),
-    )
-    .insert_resource(bevy::winit::WinitSettings::desktop_app())
-    .add_plugins((
-        default_plugins(),
-        bevy_ecs_tilemap::TilemapPlugin,
-        bevy_simple_text_input::TextInputPlugin,
-        crate::state::Plugin,
-        crate::editor::Plugin,
-        crate::ui::Plugin,
-        crate::lcf_asset_loader::Plugin,
-    ))
-    .init_resource::<crate::state::CurrentCodePage>()
-    .add_systems(PreStartup, crate::fonts::init);
-
-    // Taking it out of the field so it cannot accidentally be used later
-    if let Some(game_dir) = args.game_dir.take() {
-        app.insert_resource(crate::state::GamePath(game_dir));
-    }
-
-    app.run();
+pub fn run(args: crate::Args) -> AppExit {
+    App::new()
+        .insert_resource(bevy::winit::WinitSettings::desktop_app())
+        .add_plugins((
+            default_plugins(),
+            bevy_ecs_tilemap::TilemapPlugin,
+            bevy_simple_text_input::TextInputPlugin,
+            crate::state::Plugin,
+            crate::editor::Plugin,
+            crate::ui::Plugin,
+            crate::lcf_asset_loader::Plugin,
+        ))
+        .init_resource::<crate::state::CurrentCodePage>()
+        .add_systems(PreStartup, crate::fonts::init)
+        .insert_resource(crate::state::GamePath(args.game_dir.unwrap()))
+        .run()
 }
 
-#[autodefault::autodefault]
 fn default_plugins() -> bevy::app::PluginGroupBuilder {
     DefaultPlugins
+        .set(AssetPlugin {
+            unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
+            ..Default::default()
+        })
         .set(WindowPlugin {
             primary_window: Some(bevy::window::Window {
                 title: String::from("Atlaste"),
                 fit_canvas_to_parent: true,
-                resize_constraints: WindowResizeConstraints { min_width: 400.0 },
+                resize_constraints: WindowResizeConstraints {
+                    min_width: 400.0,
+                    ..Default::default()
+                },
+                ..Default::default()
             }),
+            ..Default::default()
         })
         .set(ImagePlugin::default_nearest())
         .set(bevy::log::LogPlugin {
@@ -44,5 +42,6 @@ fn default_plugins() -> bevy::app::PluginGroupBuilder {
             level: bevy::log::Level::INFO,
             #[cfg(not(debug_assertions))]
             level: bevy::log::Level::WARN,
+            ..Default::default()
         })
 }

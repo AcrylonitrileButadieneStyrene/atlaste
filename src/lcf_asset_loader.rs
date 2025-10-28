@@ -1,7 +1,7 @@
 use bevy::{asset::AssetLoader, prelude::*};
-use bevy_asset_loader::prelude::*;
+use bevy_asset_loader::prelude::{LoadingStateAppExt as _, *};
 
-use crate::state::GameState;
+use crate::state::GameLoadState;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
@@ -13,14 +13,14 @@ impl bevy::prelude::Plugin for Plugin {
             .init_asset_loader::<MapTreeLoader>()
             .init_asset_loader::<MapUnitLoader>()
             .add_loading_state(
-                LoadingState::new(GameState::Loading)
-                    .continue_to_state(GameState::Loaded)
+                LoadingState::new(GameLoadState::Loading)
+                    .continue_to_state(GameLoadState::Loaded)
                     .load_collection::<GameAssets>(),
             );
     }
 }
 
-#[derive(AssetCollection, Resource)]
+#[derive(Resource, AssetCollection)]
 pub struct GameAssets {
     #[asset(key = "database")]
     pub database: Handle<DataBaseAsset>,
@@ -45,10 +45,9 @@ macro_rules! loader {
             ) -> Result<Self::Asset, Self::Error> {
                 let mut buf = Vec::new();
                 reader.read_to_end(&mut buf).await?;
-                match <$type>::from_bytes(&buf) {
-                    Ok((_, Ok(x))) => Ok($asset(x)),
-                    Ok((_, Err(err))) => Err(LcfAssetLoaderError::Build(err)),
-                    Err(err) => Err(LcfAssetLoaderError::Parse(err.to_owned())),
+                match <$type>::read(&mut std::io::Cursor::new(buf)) {
+                    Ok(x) => Ok($asset(x)),
+                    Err(err) => Err(LcfAssetLoaderError::Parse(err.into())),
                 }
             }
 
@@ -63,20 +62,23 @@ macro_rules! loader {
 pub enum LcfAssetLoaderError {
     #[error("IO error: {0:?}")]
     IO(#[from] std::io::Error),
-    #[error("Parse error: {0:?}")]
-    Parse(#[from] lcf_rs::nom::Err<lcf_rs::nom::error::Error<Vec<u8>>>),
-    #[error("Build error: {0:?}")]
-    Build(#[from] lcf_rs::Error),
+    #[error("Read error: {0:?}")]
+    Parse(#[from] lcf::LcfReadError),
 }
 
 #[derive(Asset, Debug, TypePath)]
-pub struct DataBaseAsset(pub lcf_rs::LcfDataBase);
-loader!(DataBaseLoader, DataBaseAsset, lcf_rs::LcfDataBase, ("ldb"));
+pub struct DataBaseAsset(pub lcf::ldb::LcfDataBase);
+loader!(
+    DataBaseLoader,
+    DataBaseAsset,
+    lcf::ldb::LcfDataBase,
+    ("ldb")
+);
 
 #[derive(Asset, Debug, TypePath)]
-pub struct MapTreeAsset(pub lcf_rs::LcfMapTree);
-loader!(MapTreeLoader, MapTreeAsset, lcf_rs::LcfMapTree, ("lmt"));
+pub struct MapTreeAsset(pub lcf::lmt::LcfMapTree);
+loader!(MapTreeLoader, MapTreeAsset, lcf::lmt::LcfMapTree, ("lmt"));
 
 #[derive(Asset, Debug, TypePath)]
-pub struct MapUnitAsset(pub lcf_rs::LcfMapUnit);
-loader!(MapUnitLoader, MapUnitAsset, lcf_rs::LcfMapUnit, ("lmu"));
+pub struct MapUnitAsset(pub lcf::lmu::LcfMapUnit);
+loader!(MapUnitLoader, MapUnitAsset, lcf::lmu::LcfMapUnit, ("lmu"));

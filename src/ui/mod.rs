@@ -1,33 +1,23 @@
 mod elements;
 mod layout;
-mod popups;
-mod start;
 mod themes;
 
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
-    picking::focus::HoverMap,
+    picking::hover::HoverMap,
     prelude::*,
 };
-
-use crate::state::{GamePath, GameState};
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((themes::Plugin, layout::Plugin, popups::Plugin))
-            .add_systems(
-                OnEnter(GameState::None),
-                start::create.run_if(not(resource_exists::<GamePath>)),
-            )
-            .add_systems(OnExit(GameState::None), despawn::<start::Marker>)
+        app.add_plugins((themes::Plugin, layout::Plugin))
             .add_systems(
                 Update,
                 (
                     scroll,
                     deselect_text_inputs,
                     (elements::collapsable::update, elements::collapsable::apply).chain(),
-                    elements::popup::propagate,
                 ),
             );
     }
@@ -35,12 +25,12 @@ impl bevy::prelude::Plugin for Plugin {
 
 fn despawn<T: Component>(mut commands: Commands, query: Query<Entity, With<T>>) {
     for entity in query.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 
 fn scroll(
-    mut wheel: EventReader<MouseWheel>,
+    mut wheel: MessageReader<MouseWheel>,
     hover: Res<HoverMap>,
     mut position: Query<&mut ScrollPosition>,
 ) {
@@ -53,7 +43,7 @@ fn scroll(
         for (_, pointer_map) in hover.iter() {
             for (entity, _) in pointer_map {
                 if let Ok(mut scroll_position) = position.get_mut(*entity) {
-                    scroll_position.offset_y -= dy;
+                    scroll_position.0.y -= dy;
                 }
             }
         }
