@@ -1,21 +1,26 @@
 use bevy::prelude::*;
 
 pub fn run(args: crate::Args) -> AppExit {
-    App::new()
-        .insert_resource(bevy::winit::WinitSettings::desktop_app())
+    let mut app = App::new();
+    app.insert_resource(bevy::winit::WinitSettings::desktop_app())
         .add_plugins((
             default_plugins(),
-            bevy_ecs_tilemap::TilemapPlugin,
             bevy_simple_text_input::TextInputPlugin,
             crate::state::Plugin,
             crate::editor::Plugin,
             crate::ui::Plugin,
-            crate::lcf_asset_loader::Plugin,
+            atlaste_lcf::Plugin,
         ))
         .init_resource::<crate::state::CurrentCodePage>()
-        .add_systems(PreStartup, crate::fonts::init)
-        .insert_resource(crate::state::GamePath(args.game_dir.unwrap()))
-        .run()
+        .add_systems(PreStartup, crate::fonts::init);
+
+    if let Some(game_path) = args.game_dir {
+        app.add_systems(Startup, move |mut commands: Commands| {
+            commands.trigger(atlaste_lcf::Load(game_path.clone()));
+        });
+    }
+
+    app.run()
 }
 
 fn default_plugins() -> bevy::app::PluginGroupBuilder {

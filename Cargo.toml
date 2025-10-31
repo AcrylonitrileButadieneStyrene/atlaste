@@ -1,38 +1,8 @@
-[package]
-name = "atlaste"
-version = "0.1.0"
-edition = "2024"
-description = "An interactive mapping tool for RPG Maker 2000 games."
-repository = "https://github.com/AcrylonitrileButadieneStyrene/atlaste"
-license = "MIT OR Apache-2.0"
-readme = "README.md"
-keywords = ["rpgmaker2000", "r2k"]
-categories = ["graphics"]
-publish = false
+[workspace]
+resolver = "3"
+members = ["crates/*"]
 
-[profile.dev]
-opt-level = 1
-
-[profile.dev.package."*"]
-opt-level = 3
-
-[profile.release]
-panic = "abort"
-lto = true
-strip = true
-
-[dependencies]
-anyhow = "*"
-bevy_asset_loader = "0.24.0-rc.1"
-bevy_pancam = "0.19"
-bevy_simple_text_input = "0.12"
-encoding_rs = "0.8"
-itertools = "0.14"
-lcf = "0.8.0"
-rfd = "0.15"
-thiserror = "2.0"
-
-[dependencies.bevy]
+[workspace.dependencies.bevy]
 version = "0.17.2"
 default-features = false
 features = [
@@ -63,9 +33,37 @@ features = [
     "webgl2",
 ]
 
-[dependencies.bevy_ecs_tilemap]
-version = "0.17"
-features = ["atlas"]
+[package]
+name = "atlaste"
+version = "0.1.0"
+edition = "2024"
+description = "An interactive mapping tool for RPG Maker 2000 games."
+repository = "https://github.com/AcrylonitrileButadieneStyrene/atlaste"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["rpgmaker2000", "r2k"]
+categories = ["graphics"]
+publish = false
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+panic = "abort"
+lto = true
+strip = true
+
+[dependencies]
+anyhow = "*"
+atlaste_lcf = { path = "./crates/atlaste_lcf" }
+bevy = { workspace = true }
+bevy_pancam = "0.19"
+bevy_simple_text_input = "0.12"
+encoding_rs = "0.8"
+rfd = "0.15"
 
 [dependencies.clap]
 version = "4.5"

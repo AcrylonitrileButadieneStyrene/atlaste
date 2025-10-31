@@ -1,32 +1,4 @@
 use bevy::{asset::AssetLoader, prelude::*};
-use bevy_asset_loader::prelude::{LoadingStateAppExt as _, *};
-
-use crate::state::GameLoadState;
-
-pub struct Plugin;
-impl bevy::prelude::Plugin for Plugin {
-    fn build(&self, app: &mut App) {
-        app.init_asset::<DataBaseAsset>()
-            .init_asset::<MapTreeAsset>()
-            .init_asset::<MapUnitAsset>()
-            .init_asset_loader::<DataBaseLoader>()
-            .init_asset_loader::<MapTreeLoader>()
-            .init_asset_loader::<MapUnitLoader>()
-            .add_loading_state(
-                LoadingState::new(GameLoadState::Loading)
-                    .continue_to_state(GameLoadState::Loaded)
-                    .load_collection::<GameAssets>(),
-            );
-    }
-}
-
-#[derive(Resource, AssetCollection)]
-pub struct GameAssets {
-    #[asset(key = "database")]
-    pub database: Handle<DataBaseAsset>,
-    #[asset(key = "map_tree")]
-    pub map_tree: Handle<MapTreeAsset>,
-}
 
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {

@@ -1,0 +1,9 @@
+[package]
+name = "atlaste_lcf"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { workspace = true }
+thiserror = "2.0"
+lcf = "0.8.0"

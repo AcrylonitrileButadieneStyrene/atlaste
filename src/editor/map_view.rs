@@ -1,10 +1,11 @@
-use bevy::{asset::LoadState, prelude::*};
-use bevy_ecs_tilemap::prelude::*;
-
-use crate::{
-    lcf_asset_loader::{DataBaseAsset, GameAssets, MapUnitAsset},
-    state::{CurrentCodePage, GamePath},
+use atlaste_lcf::MapUnitAsset;
+use bevy::{
+    asset::LoadState,
+    prelude::*,
+    sprite_render::{TileData, TilemapChunk, TilemapChunkTileData},
 };
+
+use crate::state::{CurrentCodePage, GameData};
 
 #[derive(Event)]
 pub struct Add(pub u32);
@@ -18,17 +19,14 @@ pub struct Setup(Entity);
 #[derive(Component)]
 pub struct MapUnit(Handle<MapUnitAsset>);
 
-const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
-const GRID_SIZE: TilemapGridSize = TilemapGridSize { x: 16.0, y: 16.0 };
-
 pub fn on_add(
     trigger: On<Add>,
     mut commands: Commands,
-    game_path: Res<GamePath>,
+    game: Res<GameData>,
     asset_server: Res<AssetServer>,
 ) {
-    let map = asset_server
-        .load::<MapUnitAsset>(game_path.with(|p| p.join(format!("Map{:0>4}.lmu", trigger.0))));
+    let map =
+        asset_server.load::<MapUnitAsset>(game.game_dir.join(format!("Map{:0>4}.lmu", trigger.0)));
 
     commands.spawn((
         Loading,
@@ -65,73 +63,40 @@ pub fn setup_view(
     query: Query<&MapUnit>,
     map_units: Res<Assets<MapUnitAsset>>,
     asset_server: Res<AssetServer>,
-    game_assets: Res<GameAssets>,
-    databases: Res<Assets<DataBaseAsset>>,
+    game: Res<GameData>,
     code_page: Res<CurrentCodePage>,
-    game_path: Res<GamePath>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let map_unit = &query.get(trigger.0).unwrap();
     let map = &map_units.get(map_unit.0.id()).unwrap().0;
 
-    let database = databases.get(game_assets.database.id()).unwrap();
-    let chipset = &database.0.chipsets[map.chipset.unwrap() as usize - 1].file;
+    let chipset = &game.database.chipsets[map.chipset.unwrap() as usize - 1].file;
     let file = code_page.0.to_encoding().decode(chipset).0.to_string();
-    let texture =
-        asset_server.load::<Image>(game_path.with(|p| p.join("ChipSet/").join(file + ".png"))); // TODO: it can be a .bmp too
-    let size = TilemapSize::new(map.width, map.height);
-    let mut storage = TileStorage::empty(size);
+    let texture = asset_server.load::<Image>(game.game_dir.join("ChipSet/").join(file + ".png")); // TODO: it can be a .bmp too
 
-    let tilemap = commands.spawn(ChildOf(trigger.0)).id();
-
-    // TODO: spawn the upper layer
-    for (x, y) in itertools::iproduct!(0..size.x, 0..size.y) {
-        let tile_pos = TilePos {
-            x,
-            y: size.y - y - 1,
-        };
-        let tile_entity = commands
-            .spawn(TileBundle {
-                position: tile_pos,
-                tilemap_id: TilemapId(tilemap),
-                texture_index: TileTextureIndex(convert_layer_to_chipset_index(
-                    map.lower[(y * size.x + x) as usize] as usize,
-                ) as u32),
-                ..Default::default()
-            })
-            .id();
-        storage.set(&tile_pos, tile_entity);
-    }
-
-    commands.entity(tilemap).insert(TilemapBundle {
-        tile_size: TILE_SIZE,
-        grid_size: GRID_SIZE,
-        map_type: TilemapType::Square,
-        texture: TilemapTexture::Single(texture),
-        size,
-        storage,
-        ..Default::default()
-    });
-
-    let x = size.x as f32 * GRID_SIZE.x;
-    let y = size.y as f32 * GRID_SIZE.y;
+    let chunk_size = UVec2::new(map.width, map.height);
 
     commands.spawn((
-        Mesh2d(meshes.add(Rectangle::default())),
-        MeshMaterial2d(materials.add(ColorMaterial::from(Color::hsl(0., 0., 0.3)))),
-        Transform::from_translation(Vec3::new(
-            (x - GRID_SIZE.x) / 2.0,
-            (y - GRID_SIZE.y) / 2.0,
-            -1.,
-        ))
-        .with_scale(Vec3::new(x, y, 1.0)),
+        TilemapChunk {
+            tileset: texture,
+            tile_display_size: UVec2::splat(1),
+            chunk_size,
+            alpha_mode: bevy::sprite_render::AlphaMode2d::Opaque,
+        },
+        TilemapChunkTileData(
+            (0..chunk_size.element_product() as usize)
+                .map(|i| {
+                    Some(TileData::from_tileset_index(
+                        convert_layer_to_chipset_index(map.lower[i]),
+                    ))
+                })
+                .collect(),
+        ),
         ChildOf(trigger.0),
     ));
 }
 
 #[must_use]
-const fn convert_layer_to_chipset_index(id: usize) -> usize {
+const fn convert_layer_to_chipset_index(id: u16) -> u16 {
     match id {
         // ground layer unanimated
         5000..=5143 => {

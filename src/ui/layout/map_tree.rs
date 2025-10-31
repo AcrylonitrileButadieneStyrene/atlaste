@@ -4,10 +4,7 @@ use bevy_simple_text_input::{
     TextInputSubmitMessage,
 };
 
-use crate::{
-    lcf_asset_loader::{GameAssets, MapTreeAsset},
-    state::{CodePage, CurrentCodePage},
-};
+use crate::state::{CodePage, CurrentCodePage, GameData};
 
 #[derive(Component)]
 pub struct SearchMarker;
@@ -21,12 +18,9 @@ pub struct UpdateText;
 pub fn setup(
     mut commands: Commands,
     layout: Res<super::Layout>,
-    game_data: Res<GameAssets>,
-    map_trees: Res<Assets<MapTreeAsset>>,
+    game_data: Res<GameData>,
     fonts: Res<crate::fonts::Fonts>,
 ) {
-    let map_tree = map_trees.get(game_data.map_tree.id()).unwrap();
-
     commands
         .spawn((
             Node {
@@ -78,7 +72,7 @@ pub fn setup(
                     Pickable::IGNORE,
                 ))
                 .with_children(|parent| {
-                    for (id, map) in &map_tree.0.maps {
+                    for (id, map) in &game_data.map_tree.maps {
                         let id = *id;
 
                         parent.spawn((
