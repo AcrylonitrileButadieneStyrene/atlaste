@@ -1,15 +1,5 @@
 #![feature(lock_value_accessors)]
 #![forbid(unsafe_code)]
-#![warn(clippy::nursery)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::cargo)]
-#![allow(clippy::multiple_crate_versions)]
-#![allow(clippy::needless_pass_by_value)]
-#![allow(clippy::cast_possible_truncation)]
-#![allow(clippy::cast_precision_loss)]
-#![allow(clippy::cast_sign_loss)]
-#![allow(clippy::type_complexity)]
-#![allow(dead_code)]
 
 mod app;
 mod editor;
@@ -28,7 +18,7 @@ fn main() -> bevy::app::AppExit {
 
     if let Some(path) = &args.game_dir {
         if path.ends_with("RPG_RT.ldb") {
-            args.game_dir = Some(path.parent().unwrap().to_owned())
+            args.game_dir = Some(path.parent().unwrap().to_owned());
         }
     } else {
         rfd::MessageDialog::new()

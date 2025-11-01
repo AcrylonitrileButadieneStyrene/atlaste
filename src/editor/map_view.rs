@@ -1,7 +1,7 @@
 use atlaste_lcf::MapUnitAsset;
 use bevy::{
-    asset::LoadState,
     prelude::*,
+    render::render_resource::Extent3d,
     sprite_render::{TileData, TilemapChunk, TilemapChunkTileData},
 };
 
@@ -10,14 +10,18 @@ use crate::state::{CurrentCodePage, GameData};
 #[derive(Event)]
 pub struct Add(pub u32);
 
-#[derive(Component)]
-pub struct Loading;
-
 #[derive(EntityEvent)]
-pub struct Setup(Entity);
+pub struct Setup {
+    entity: Entity,
+    map_unit: Handle<MapUnitAsset>,
+    chipset: Handle<Image>,
+}
 
 #[derive(Component)]
 pub struct MapUnit(Handle<MapUnitAsset>);
+
+#[derive(Component)]
+pub struct LoadingChipset(Handle<Image>);
 
 pub fn on_add(
     trigger: On<Add>,
@@ -28,56 +32,87 @@ pub fn on_add(
     let map =
         asset_server.load::<MapUnitAsset>(game.game_dir.join(format!("Map{:0>4}.lmu", trigger.0)));
 
-    commands.spawn((
-        Loading,
-        MapUnit(map),
-        Transform::default(),
-        Visibility::default(),
-    ));
+    commands.spawn((MapUnit(map), Transform::default(), Visibility::default()));
 }
 
-pub fn process_loading(
-    mut commands: Commands,
-    query: Query<(Entity, &MapUnit), With<Loading>>,
+pub fn on_map_unit_load(
+    mut messages: MessageReader<AssetEvent<MapUnitAsset>>,
     asset_server: Res<AssetServer>,
-) {
-    query
-        .iter()
-        .for_each(|(entity, map)| match asset_server.load_state(&map.0) {
-            LoadState::NotLoaded | LoadState::Loading => (),
-            LoadState::Loaded => {
-                commands.entity(entity).remove::<Loading>();
-                commands.trigger(Setup(entity));
-            }
-            LoadState::Failed(err) => {
-                log::error!("Failed to load map: {err:?}");
-                commands.entity(entity).despawn();
-            }
-        });
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn setup_view(
-    trigger: On<Setup>,
-    mut commands: Commands,
-    query: Query<&MapUnit>,
+    query: Query<(Entity, &MapUnit)>,
     map_units: Res<Assets<MapUnitAsset>>,
-    asset_server: Res<AssetServer>,
     game: Res<GameData>,
     code_page: Res<CurrentCodePage>,
+    mut commands: Commands,
 ) {
-    let map_unit = &query.get(trigger.0).unwrap();
-    let map = &map_units.get(map_unit.0.id()).unwrap().0;
+    let finished_loading = messages
+        .read()
+        .filter_map(|message| match message {
+            AssetEvent::LoadedWithDependencies { id } => Some(id),
+            _ => None,
+        })
+        .filter_map(|id| asset_server.get_id_handle(*id))
+        .collect::<Vec<_>>();
+    if !finished_loading.is_empty() {
+        for (entity, map_view) in query.iter() {
+            if finished_loading.contains(&map_view.0) {
+                let map = &map_units.get(&map_view.0).unwrap();
+                let chipset = &game.database.chipsets[map.chipset.unwrap() as usize - 1].file;
+                let file = code_page.0.to_encoding().decode(chipset).0.to_string();
+                // bevy 18 will add a setting to loading images but it does not help me because chipsets are not 1x480, they are 30x16
+                let texture = asset_server.load(game.game_dir.join("ChipSet/").join(file + ".png")); // TODO: it can be a .bmp too
+                commands.entity(entity).insert(LoadingChipset(texture));
+            }
+        }
+    }
+}
 
-    let chipset = &game.database.chipsets[map.chipset.unwrap() as usize - 1].file;
-    let file = code_page.0.to_encoding().decode(chipset).0.to_string();
-    let texture = asset_server.load::<Image>(game.game_dir.join("ChipSet/").join(file + ".png")); // TODO: it can be a .bmp too
+pub fn on_image_load(
+    mut messages: MessageReader<AssetEvent<Image>>,
+    asset_server: Res<AssetServer>,
+    query: Query<(Entity, &MapUnit, &LoadingChipset)>,
+    mut images: ResMut<Assets<Image>>,
+    mut commands: Commands,
+) {
+    let finished_loading = messages
+        .read()
+        .filter_map(|message| match message {
+            AssetEvent::LoadedWithDependencies { id } => Some(id),
+            _ => None,
+        })
+        .filter_map(|id| asset_server.get_id_handle(*id))
+        .collect::<Vec<_>>();
+    if !finished_loading.is_empty() {
+        for (entity, map_unit, chipset) in query.iter() {
+            if finished_loading.contains(&chipset.0) {
+                let image_handle = chipset.0.clone();
+                let image = images.get_mut(&image_handle).unwrap();
+                let pixels = image.data.take().unwrap();
+                // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
+                image.data = Some(fix_pixels(pixels));
+                image.reinterpret_size(Extent3d {
+                    width: 16,
+                    height: 16,
+                    depth_or_array_layers: 480,
+                });
 
+                commands.entity(entity).remove::<LoadingChipset>();
+                commands.trigger(Setup {
+                    entity,
+                    map_unit: map_unit.0.clone(),
+                    chipset: image_handle,
+                });
+            }
+        }
+    }
+}
+
+pub fn setup_view(setup: On<Setup>, mut commands: Commands, map_units: Res<Assets<MapUnitAsset>>) {
+    let map = &map_units.get(setup.map_unit.id()).unwrap().0;
     let chunk_size = UVec2::new(map.width, map.height);
 
     commands.spawn((
         TilemapChunk {
-            tileset: texture,
+            tileset: setup.chipset.clone(),
             tile_display_size: UVec2::splat(1),
             chunk_size,
             alpha_mode: bevy::sprite_render::AlphaMode2d::Opaque,
@@ -91,7 +126,7 @@ pub fn setup_view(
                 })
                 .collect(),
         ),
-        ChildOf(trigger.0),
+        ChildOf(setup.entity),
     ));
 }
 
@@ -107,4 +142,26 @@ const fn convert_layer_to_chipset_index(id: u16) -> u16 {
         }
         _ => 0, // todo
     }
+}
+
+// there is definitely a better way to do this but this worked first try so i will not be changing it
+#[must_use]
+fn fix_pixels(pixels: Vec<u8>) -> Vec<u8> {
+    let mut new_pixels = Vec::with_capacity(pixels.len());
+
+    for tile_index in 0..480 {
+        let start_x = tile_index % 30;
+        let start_y = tile_index / 30;
+        for square_index in 0..256 {
+            let add_x = square_index % 16;
+            let add_y = square_index / 16;
+            for byte in 0..4 {
+                let pixel =
+                    pixels[(start_x * 16 + add_x + (start_y * 16 + add_y) * 480) * 4 + byte];
+                new_pixels.push(pixel);
+            }
+        }
+    }
+
+    new_pixels
 }

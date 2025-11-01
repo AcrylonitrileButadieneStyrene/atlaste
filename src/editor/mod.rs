@@ -1,3 +1,4 @@
+use atlaste_lcf::MapUnitAsset;
 use bevy::prelude::*;
 
 pub mod camera;
@@ -12,7 +13,8 @@ impl bevy::prelude::Plugin for Plugin {
                 Update,
                 (
                     camera::check_movement.before(bevy_pancam::PanCamSystems),
-                    map_view::process_loading,
+                    map_view::on_map_unit_load.run_if(on_message::<AssetEvent<MapUnitAsset>>),
+                    map_view::on_image_load.run_if(on_message::<AssetEvent<Image>>),
                 ),
             )
             .add_observer(map_view::on_add)

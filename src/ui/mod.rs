@@ -23,12 +23,6 @@ impl bevy::prelude::Plugin for Plugin {
     }
 }
 
-fn despawn<T: Component>(mut commands: Commands, query: Query<Entity, With<T>>) {
-    for entity in query.iter() {
-        commands.entity(entity).despawn();
-    }
-}
-
 fn scroll(
     mut wheel: MessageReader<MouseWheel>,
     hover: Res<HoverMap>,

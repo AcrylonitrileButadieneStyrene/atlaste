@@ -33,6 +33,15 @@ features = [
     "webgl2",
 ]
 
+[lints.clippy]
+nursery = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+needless_pass_by_value = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+type_complexity = "allow"
+
 [package]
 name = "atlaste"
 version = "0.1.0"
