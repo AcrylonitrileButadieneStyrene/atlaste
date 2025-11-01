@@ -1,10 +1,22 @@
-use bevy::{asset::AssetLoader, prelude::*};
+use bevy::prelude::*;
+use lcf::{ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit};
 
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {
+        #[derive(Asset, Debug, TypePath)]
+        pub struct $asset(pub $type);
+
+        impl std::ops::Deref for $asset {
+            type Target = $type;
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
         #[derive(Default)]
         pub struct $loader;
-        impl AssetLoader for $loader {
+        impl bevy::asset::AssetLoader for $loader {
             type Asset = $asset;
             type Settings = ();
             type Error = LcfAssetLoaderError;
@@ -38,19 +50,6 @@ pub enum LcfAssetLoaderError {
     Parse(#[from] lcf::LcfReadError),
 }
 
-#[derive(Asset, Debug, TypePath)]
-pub struct DataBaseAsset(pub lcf::ldb::LcfDataBase);
-loader!(
-    DataBaseLoader,
-    DataBaseAsset,
-    lcf::ldb::LcfDataBase,
-    ("ldb")
-);
-
-#[derive(Asset, Debug, TypePath)]
-pub struct MapTreeAsset(pub lcf::lmt::LcfMapTree);
-loader!(MapTreeLoader, MapTreeAsset, lcf::lmt::LcfMapTree, ("lmt"));
-
-#[derive(Asset, Debug, TypePath)]
-pub struct MapUnitAsset(pub lcf::lmu::LcfMapUnit);
-loader!(MapUnitLoader, MapUnitAsset, lcf::lmu::LcfMapUnit, ("lmu"));
+loader!(DataBaseLoader, DataBaseAsset, LcfDataBase, ("ldb"));
+loader!(MapTreeLoader, MapTreeAsset, LcfMapTree, ("lmt"));
+loader!(MapUnitLoader, MapUnitAsset, LcfMapUnit, ("lmu"));
