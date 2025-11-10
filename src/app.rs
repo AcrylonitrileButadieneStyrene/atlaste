@@ -5,14 +5,27 @@ pub fn run(args: crate::Args) -> AppExit {
     app.insert_resource(bevy::winit::WinitSettings::desktop_app())
         .add_plugins((
             default_plugins(),
-            bevy_simple_text_input::TextInputPlugin,
+            atlaste_lcf::Plugin,
+            atlaste_ui::Plugin,
             crate::state::Plugin,
             crate::editor::Plugin,
-            crate::ui::Plugin,
-            atlaste_lcf::Plugin,
         ))
         .init_resource::<crate::state::CurrentCodePage>()
-        .add_systems(PreStartup, crate::fonts::init);
+        .insert_resource(
+            bevy_persistent::Persistent::<crate::settings::Settings>::builder()
+                .name("settings")
+                .format(bevy_persistent::StorageFormat::Toml)
+                .path(
+                    dirs::config_dir()
+                        .map(|dir| dir.join("atlaste.toml"))
+                        .unwrap_or(std::path::Path::new("local").join("settings")),
+                )
+                .default(Default::default())
+                .revertible(true)
+                .revert_to_default_on_deserialization_errors(true)
+                .build()
+                .unwrap(),
+        );
 
     if let Some(game_path) = args.game_dir {
         app.add_systems(Startup, move |mut commands: Commands| {

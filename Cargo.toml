@@ -2,6 +2,10 @@
 resolver = "3"
 members = ["crates/*"]
 
+[workspace.dependencies]
+encoding_rs = "0.8"
+strum = { version = "0.27", features = ["derive"] }
+
 [workspace.dependencies.bevy]
 version = "0.17.2"
 default-features = false
@@ -24,6 +28,7 @@ features = [
     "bevy_window",
     "bevy_winit",
     "default_font",
+    "experimental_bevy_feathers",
     "multi_threaded",
     "png",
     "reflect_auto_register",
@@ -66,22 +71,18 @@ lto = true
 strip = true
 
 [dependencies]
-anyhow = "*"
 atlaste_lcf = { path = "./crates/atlaste_lcf" }
+atlaste_ui = { path = "./crates/atlaste_ui" }
 bevy = { workspace = true }
+bevy-persistent = { version = "0.9.0", features = ["toml"] }
 bevy_pancam = "0.19"
-bevy_simple_text_input = "0.12"
-encoding_rs = "0.8"
+clap = { version = "4.5", features = ["derive"] }
+dirs = "6.0.0"
+encoding_rs = { workspace = true }
+log = { version = "*", features = [
+    "max_level_debug",
+    "release_max_level_warn",
+] }
 rfd = "0.15"
-
-[dependencies.clap]
-version = "4.5"
-features = ["derive"]
-
-[dependencies.log]
-version = "*"
-features = ["max_level_debug", "release_max_level_warn"]
-
-[dependencies.strum]
-version = "0.27.1"
-features = ["derive"]
+serde = { version = "1.0", features = ["derive"] }
+strum = { workspace = true }

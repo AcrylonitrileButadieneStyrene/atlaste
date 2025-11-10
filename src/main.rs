@@ -3,9 +3,8 @@
 
 mod app;
 mod editor;
-mod fonts;
+mod settings;
 mod state;
-mod ui;
 
 #[derive(Debug, clap::Parser)]
 struct Args {

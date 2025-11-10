@@ -1,6 +1,5 @@
 mod elements;
 mod layout;
-mod themes;
 
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
@@ -11,15 +10,14 @@ use bevy::{
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((themes::Plugin, layout::Plugin))
-            .add_systems(
-                Update,
-                (
-                    scroll,
-                    deselect_text_inputs,
-                    (elements::collapsable::update, elements::collapsable::apply).chain(),
-                ),
-            );
+        app.add_plugins(layout::Plugin).add_systems(
+            Update,
+            (
+                scroll,
+                deselect_text_inputs,
+                (elements::collapsable::update, elements::collapsable::apply).chain(),
+            ),
+        );
     }
 }
 

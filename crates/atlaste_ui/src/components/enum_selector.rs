@@ -1,0 +1,63 @@
+use bevy::{
+    ecs::relationship::RelatedSpawner,
+    feathers::controls::radio,
+    prelude::*,
+    ui::Checked,
+    ui_widgets::{RadioGroup, ValueChange},
+};
+use bevy_spawn_observer::SpawnObserver;
+
+#[derive(Clone, Debug, Component, Event)]
+pub struct VariantSelected<T>(pub T);
+
+pub fn new<T>() -> impl Bundle
+where
+    T: Clone + std::fmt::Debug + Default + PartialEq<T> + Send + Sync,
+    T: strum::VariantArray + strum::EnumProperty,
+{
+    (
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            ..Default::default()
+        },
+        RadioGroup,
+        Children::spawn((
+            SpawnWith(|parent: &mut RelatedSpawner<ChildOf>| {
+                for variant in T::VARIANTS {
+                    let mut ent = parent.spawn(radio(
+                        VariantSelected(variant.clone()),
+                        Spawn(Text::new(variant.get_str("Name").map_or_else(
+                            || format!("{:?}", variant),
+                            |str| str.to_owned(),
+                        ))),
+                    ));
+
+                    if variant == &T::default() {
+                        ent.insert(Checked);
+                    }
+                }
+            }),
+            SpawnObserver::new(
+                |selected: On<ValueChange<Entity>>,
+                 children: Query<&Children>,
+                 variants: Query<&VariantSelected<T>>,
+                 checked: Query<Entity, With<Checked>>,
+                 mut commands: Commands|
+                 -> Result {
+                    // remove all existing `Checked` components because i have to do it myself for some reason
+                    for child in children.get(selected.source)? {
+                        let Ok(entity) = checked.get(*child) else {
+                            continue;
+                        };
+
+                        commands.get_entity(entity)?.remove::<Checked>();
+                    }
+
+                    commands.get_entity(selected.value)?.insert(Checked);
+                    Ok(commands.trigger(variants.get(selected.value)?.clone()))
+                },
+            ),
+        )),
+    )
+}
