@@ -1,6 +1,7 @@
-use bevy::{picking::hover::HoverMap, prelude::*};
+use bevy::{color::palettes::tailwind::STONE_950, picking::hover::HoverMap, prelude::*};
 
 pub fn setup(mut commands: Commands) {
+    commands.insert_resource(ClearColor(Color::from(STONE_950)));
     commands.spawn((
         Camera2d,
         bevy_pancam::PanCam {

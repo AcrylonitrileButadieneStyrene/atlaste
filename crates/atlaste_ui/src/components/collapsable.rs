@@ -17,6 +17,7 @@ struct Collapsable {
 
 pub fn new<T: Bundle>(bundle: T, label: impl Into<String>, initial: Visibility) -> impl Bundle {
     (
+        Name::new("Collapsible"),
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,

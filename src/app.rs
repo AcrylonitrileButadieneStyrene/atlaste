@@ -1,10 +1,14 @@
 use bevy::prelude::*;
 
+use crate::settings::Settings;
+
 pub fn run(args: crate::Args) -> AppExit {
     let mut app = App::new();
     app.insert_resource(bevy::winit::WinitSettings::desktop_app())
         .add_plugins((
             default_plugins(),
+            bevy::remote::RemotePlugin::default(),
+            bevy::remote::http::RemoteHttpPlugin::default(),
             atlaste_lcf::Plugin,
             atlaste_ui::Plugin,
             crate::state::Plugin,
@@ -15,12 +19,11 @@ pub fn run(args: crate::Args) -> AppExit {
             bevy_persistent::Persistent::<crate::settings::Settings>::builder()
                 .name("settings")
                 .format(bevy_persistent::StorageFormat::Toml)
-                .path(
-                    dirs::config_dir()
-                        .map(|dir| dir.join("atlaste.toml"))
-                        .unwrap_or(std::path::Path::new("local").join("settings")),
-                )
-                .default(Default::default())
+                .path(dirs::config_dir().map_or_else(
+                    || std::path::Path::new("local").join("settings"),
+                    |dir| dir.join("atlaste.toml"),
+                ))
+                .default(Settings::default())
                 .revertible(true)
                 .revert_to_default_on_deserialization_errors(true)
                 .build()

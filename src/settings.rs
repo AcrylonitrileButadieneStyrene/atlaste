@@ -3,6 +3,7 @@ pub struct Settings {
     pub recent_games: Vec<std::path::PathBuf>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for Settings {
     fn default() -> Self {
         Self {

@@ -16,6 +16,7 @@ where
     T: strum::VariantArray + strum::EnumProperty,
 {
     (
+        Name::new("Enum Selector"),
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
@@ -55,7 +56,8 @@ where
                     }
 
                     commands.get_entity(selected.value)?.insert(Checked);
-                    Ok(commands.trigger(variants.get(selected.value)?.clone()))
+                    commands.trigger(variants.get(selected.value)?.clone());
+                    Ok(())
                 },
             ),
         )),

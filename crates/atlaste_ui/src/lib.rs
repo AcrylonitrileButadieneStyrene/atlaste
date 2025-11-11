@@ -1,9 +1,9 @@
-use bevy::{prelude::*, ui_widgets::RadioGroup};
+use bevy::prelude::*;
 
 pub mod components;
 mod fonts;
-mod layout;
 pub mod sections;
+pub mod theme;
 
 pub use fonts::Fonts;
 
@@ -19,10 +19,9 @@ impl bevy::prelude::Plugin for Plugin {
             bevy::ui_widgets::RadioGroupPlugin,
             bevy_simple_text_input::TextInputPlugin,
         ))
-        .insert_resource(bevy::feathers::theme::UiTheme(
-            bevy::feathers::dark_theme::create_dark_theme(),
-        ))
-        .add_systems(Startup, layout::setup)
-        .add_systems(PreStartup, fonts::init);
+        .insert_resource(theme::default())
+        .add_systems(PreStartup, fonts::init)
+        .add_systems(Startup, sections::setup)
+        .add_systems(Update, components::menu_button::check_hover);
     }
 }
