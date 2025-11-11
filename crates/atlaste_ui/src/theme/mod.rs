@@ -1,5 +1,6 @@
 use bevy::{color::palettes::tailwind, feathers::theme::UiTheme, prelude::*};
 
+pub mod fonts;
 pub mod tokens;
 
 pub fn default() -> UiTheme {

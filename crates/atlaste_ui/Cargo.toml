@@ -6,6 +6,5 @@ edition = "2024"
 [dependencies]
 bevy = { workspace = true }
 bevy_simple_text_input = "0.12"
-bevy_spawn_observer = "0.2.0"
 encoding_rs = { workspace = true }
 strum = { workspace = true }

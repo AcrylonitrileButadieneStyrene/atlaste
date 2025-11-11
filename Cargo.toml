@@ -18,7 +18,6 @@ features = [
     "bevy_input_focus",
     "bevy_log",
     "bevy_picking",
-    "bevy_remote",
     "bevy_render",
     "bevy_scene",
     "bevy_state",

@@ -1,3 +1,5 @@
+use bevy::feathers::theme::ThemeToken;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, strum::VariantArray, strum::EnumProperty)]
 pub enum CodePage {
     #[default]
@@ -21,6 +23,15 @@ impl CodePage {
             Self::Cyrillic => encoding_rs::WINDOWS_1251,
             Self::ShiftJIS => encoding_rs::SHIFT_JIS,
             Self::Big5 => encoding_rs::BIG5,
+        }
+    }
+
+    pub const fn to_theme_token(self) -> ThemeToken {
+        match self {
+            CodePage::Ascii | CodePage::Eastern | CodePage::Cyrillic | CodePage::Big5 => {
+                crate::theme::tokens::FONT_NORMAL
+            }
+            CodePage::ShiftJIS => crate::theme::tokens::FONT_JAPANESE,
         }
     }
 }

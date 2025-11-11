@@ -1,7 +1,4 @@
-use std::ops::Deref;
-
 use bevy::{
-    color::palettes::css::RED,
     ecs::spawn::SpawnableList,
     feathers::controls::{ButtonProps, ButtonVariant, button},
     picking::hover::HoverMap,
@@ -50,7 +47,10 @@ pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
                                 continue;
                             };
 
-                            *visibility = Visibility::Inherited;
+                            *visibility = match *visibility {
+                                Visibility::Hidden => Visibility::Inherited,
+                                Visibility::Inherited | Visibility::Visible => Visibility::Hidden,
+                            };
                             popup.timer.reset();
                         }
 

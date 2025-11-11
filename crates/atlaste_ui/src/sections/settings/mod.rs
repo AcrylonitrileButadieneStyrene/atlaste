@@ -7,8 +7,8 @@ pub fn new() -> impl Bundle {
     (
         Name::new("UI Settings Panel"),
         Node {
-            display: Display::Block,
-            // flex_direction: FlexDirection::Column,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
             grid_row: GridPlacement::start(2),
             grid_column: GridPlacement::start(3),
             padding: UiRect::all(px(4)),
@@ -18,7 +18,7 @@ pub fn new() -> impl Bundle {
         Children::spawn(Spawn(crate::components::collapsable::new(
             crate::components::enum_selector::new::<CodePage>(),
             "Codepage",
-            Visibility::Hidden,
+            false,
         ))),
     )
 }

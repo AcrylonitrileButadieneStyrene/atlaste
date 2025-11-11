@@ -7,8 +7,6 @@ pub fn run(args: crate::Args) -> AppExit {
     app.insert_resource(bevy::winit::WinitSettings::desktop_app())
         .add_plugins((
             default_plugins(),
-            bevy::remote::RemotePlugin::default(),
-            bevy::remote::http::RemoteHttpPlugin::default(),
             atlaste_lcf::Plugin,
             atlaste_ui::Plugin,
             crate::state::Plugin,
