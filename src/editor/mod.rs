@@ -1,24 +1,16 @@
 use bevy::prelude::*;
 
-use crate::state::GameData;
-
 pub mod camera;
 pub mod map_view;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(bevy_pancam::PanCamPlugin)
-            .add_systems(Startup, (camera::setup, map_view::setup))
+        app.add_plugins((bevy_pancam::PanCamPlugin, map_view::Plugin))
+            .add_systems(Startup, camera::setup)
             .add_systems(
                 Update,
-                (
-                    camera::check_movement.before(bevy_pancam::PanCamSystems),
-                    (map_view::check_map_unit_load, map_view::check_image_load)
-                        .run_if(resource_exists::<GameData>),
-                ),
-            )
-            .add_observer(map_view::on_add)
-            .add_observer(map_view::setup_view);
+                (camera::check_movement.before(bevy_pancam::PanCamSystems),),
+            );
     }
 }
