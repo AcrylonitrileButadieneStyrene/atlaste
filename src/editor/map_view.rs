@@ -1,14 +1,30 @@
 use atlaste_lcf::MapUnitAsset;
 use bevy::{
+    asset::RenderAssetUsages,
     prelude::*,
-    render::render_resource::Extent3d,
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
     sprite_render::{TileData, TilemapChunk, TilemapChunkTileData},
 };
 
 use crate::state::{CurrentCodePage, GameData};
 
-#[derive(Event)]
-pub struct Add(pub u32);
+#[derive(Resource)]
+pub struct NullChipSet(pub Handle<Image>);
+
+pub fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+    let texture = images.add(Image::new_fill(
+        Extent3d {
+            width: 30 * 16,
+            height: 16 * 16,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &[0x00, 0xFF, 0x00, 0xFF],
+        TextureFormat::bevy_default(),
+        RenderAssetUsages::RENDER_WORLD,
+    ));
+    commands.insert_resource(NullChipSet(texture));
+}
 
 #[derive(EntityEvent)]
 pub struct Setup {
@@ -24,7 +40,7 @@ pub struct MapUnit(Handle<MapUnitAsset>);
 pub struct LoadingChipset(Handle<Image>);
 
 pub fn on_add(
-    trigger: On<Add>,
+    trigger: On<atlaste_ui::sections::map_tree::EntryClicked>,
     mut commands: Commands,
     game: Res<GameData>,
     asset_server: Res<AssetServer>,
@@ -35,6 +51,7 @@ pub fn on_add(
     commands.spawn((MapUnit(map), Transform::default(), Visibility::default()));
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn on_map_unit_load(
     mut messages: MessageReader<AssetEvent<MapUnitAsset>>,
     asset_server: Res<AssetServer>,
@@ -43,6 +60,7 @@ pub fn on_map_unit_load(
     game: Res<GameData>,
     code_page: Res<CurrentCodePage>,
     mut commands: Commands,
+    null_chipset: Res<NullChipSet>,
 ) {
     let finished_loading = messages
         .read()
@@ -52,14 +70,24 @@ pub fn on_map_unit_load(
         })
         .filter_map(|id| asset_server.get_id_handle(*id))
         .collect::<Vec<_>>();
+
     if !finished_loading.is_empty() {
         for (entity, map_view) in query.iter() {
             if finished_loading.contains(&map_view.0) {
+                // will always be present, it just loaded
                 let map = &map_units.get(&map_view.0).unwrap();
-                let chipset = &game.database.chipsets[map.chipset.unwrap() as usize - 1].file;
-                let file = code_page.0.to_encoding().decode(chipset).0.to_string();
-                // bevy 18 will add a setting to loading images but it does not help me because chipsets are not 1x480, they are 30x16
-                let texture = asset_server.load(game.game_dir.join("ChipSet/").join(file + ".png")); // TODO: it can be a .bmp too
+
+                let texture = match map.chipset {
+                    Some(chipset) => {
+                        let chipset = &game.database.chipsets[chipset as usize - 1].file;
+                        let file = code_page.0.to_encoding().decode(chipset).0.to_string();
+
+                        // bevy 18 will add a setting to loading images but it does not help me because chipsets are not 1x480, they are 30x16
+                        asset_server.load(game.game_dir.join("ChipSet/").join(file + ".png")) // TODO: it can be a .bmp too
+                    }
+                    None => null_chipset.0.clone(),
+                };
+
                 commands.entity(entity).insert(LoadingChipset(texture));
             }
         }
@@ -73,6 +101,7 @@ pub fn on_image_load(
     mut images: ResMut<Assets<Image>>,
     mut commands: Commands,
 ) {
+    // TODO: if the image does not load then use the null chipset
     let finished_loading = messages
         .read()
         .filter_map(|message| match message {

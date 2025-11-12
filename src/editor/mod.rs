@@ -8,7 +8,7 @@ pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(bevy_pancam::PanCamPlugin)
-            .add_systems(Startup, camera::setup)
+            .add_systems(Startup, (camera::setup, map_view::setup))
             .add_systems(
                 Update,
                 (

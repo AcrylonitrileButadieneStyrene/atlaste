@@ -21,6 +21,7 @@ pub(crate) fn setup(mut commands: Commands) {
             ],
             ..Default::default()
         },
+        Pickable::IGNORE,
         Children::spawn((
             Spawn(crate::sections::title_bar::new()),
             Spawn(crate::sections::map_tree::new()),

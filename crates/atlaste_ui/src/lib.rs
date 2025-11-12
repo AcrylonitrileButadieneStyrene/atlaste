@@ -33,6 +33,7 @@ impl bevy::prelude::Plugin for Plugin {
             ),
         )
         .add_observer(sections::map_tree::on_add_entries)
+        .add_observer(sections::map_tree::on_code_page_changed)
         .add_observer(sections::map_tree::on_update_text);
     }
 }

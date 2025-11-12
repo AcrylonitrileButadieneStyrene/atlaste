@@ -34,7 +34,7 @@ features = [
     "reflect_auto_register",
     "std",
     "sysinfo_plugin",
-    "wayland",
+    "x11",
     "webgl2",
 ]
 

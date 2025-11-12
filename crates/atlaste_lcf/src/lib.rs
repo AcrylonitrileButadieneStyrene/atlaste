@@ -33,10 +33,10 @@ enum IsSomethingLoadingState {
     Yes,
 }
 
-#[derive(Event)]
+#[derive(Debug, Event)]
 pub struct Load(pub PathBuf);
 
-#[derive(Event)]
+#[derive(Debug, Event)]
 pub struct Loaded(pub Arc<Game>);
 
 #[derive(Clone, Debug)]
@@ -47,7 +47,11 @@ pub struct Game {
 }
 
 #[derive(Component)]
-struct Loading(Handle<DataBaseAsset>, Handle<MapTreeAsset>, PathBuf);
+struct Loading {
+    database: Handle<DataBaseAsset>,
+    map_tree: Handle<MapTreeAsset>,
+    path: PathBuf,
+}
 
 fn on_load(
     load: On<Load>,
@@ -55,15 +59,20 @@ fn on_load(
     mut next: ResMut<NextState<IsSomethingLoadingState>>,
     mut commands: Commands,
 ) {
+    info!("Load started");
     let path = load.0.clone();
     let database = asset_server.load::<DataBaseAsset>(path.join("RPG_RT.ldb"));
     let map_tree = asset_server.load::<MapTreeAsset>(path.join("RPG_RT.lmt"));
-    commands.spawn(Loading(database, map_tree, path));
+    commands.spawn(Loading {
+        database,
+        map_tree,
+        path,
+    });
     next.set(IsSomethingLoadingState::Yes);
 }
 
 fn check_asset(
-    mut query: Query<(Entity, &mut Loading)>,
+    mut query: Query<(Entity, &Loading)>,
     asset_server: Res<AssetServer>,
     mut databases: ResMut<Assets<DataBaseAsset>>,
     mut map_trees: ResMut<Assets<MapTreeAsset>>,
@@ -72,21 +81,22 @@ fn check_asset(
 ) {
     for (ent, loading) in query.iter_mut() {
         let database_loading = asset_server
-            .get_load_state(&loading.0)
+            .get_load_state(&loading.database)
             .unwrap()
             .is_loading();
         let map_tree_loading = asset_server
-            .get_load_state(&loading.1)
+            .get_load_state(&loading.map_tree)
             .unwrap()
             .is_loading();
         if !database_loading && !map_tree_loading {
-            let database = databases.remove(&loading.0).unwrap();
-            let map_tree = map_trees.remove(&loading.1).unwrap();
+            let database = databases.remove(&loading.database).unwrap();
+            let map_tree = map_trees.remove(&loading.map_tree).unwrap();
+            info!("Load completed");
             commands.entity(ent).despawn();
             commands.trigger(Loaded(Arc::new(Game {
                 database: database.0,
                 map_tree: map_tree.0,
-                game_dir: loading.2.clone(),
+                game_dir: loading.path.clone(),
             })));
         }
     }

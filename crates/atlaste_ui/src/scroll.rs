@@ -9,18 +9,23 @@ pub fn update(
     hover: Res<HoverMap>,
     mut position: Query<&mut ScrollPosition>,
 ) {
-    for event in wheel.read() {
-        let dy = match event.unit {
+    let Some(delta) = wheel
+        .read()
+        .map(|event| match event.unit {
             MouseScrollUnit::Line => event.y * 24.,
             MouseScrollUnit::Pixel => event.y,
-        };
+        })
+        .reduce(|acc, x| acc + x)
+    else {
+        return;
+    };
 
-        for (_, pointer_map) in hover.iter() {
-            for (entity, _) in pointer_map {
-                if let Ok(mut scroll_position) = position.get_mut(*entity) {
-                    scroll_position.0.y -= dy;
-                }
-            }
+    for entity in hover
+        .iter()
+        .flat_map(|(_, map)| map.iter().map(|(entity, _)| entity))
+    {
+        if let Ok(mut scroll_position) = position.get_mut(*entity) {
+            scroll_position.y -= delta;
         }
     }
 }
