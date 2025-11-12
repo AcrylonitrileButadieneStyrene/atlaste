@@ -1,3 +1,4 @@
+use atlaste_lcf::MapUnitAsset;
 use bevy::{
     asset::{LoadState, RenderAssetUsages},
     prelude::*,
@@ -31,6 +32,7 @@ pub fn check_load(
     fallback: Res<Fallback>,
     mut images: ResMut<Assets<Image>>,
     mut commands: Commands,
+    map_units: Res<Assets<MapUnitAsset>>,
 ) {
     for (entity, map_unit, chipset) in query.iter() {
         let handle = match asset_server.get_load_state(&chipset.0) {
@@ -60,9 +62,9 @@ pub fn check_load(
             continue;
         };
 
-        commands.trigger(super::FinalizeSetup {
+        commands.trigger(super::setup::Finalize {
             entity,
-            map_unit: map_unit.0.clone(),
+            map: map_units.get(&map_unit.0).unwrap().0.clone(),
             chipset: handle,
         });
     }

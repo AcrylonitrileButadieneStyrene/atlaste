@@ -41,8 +41,8 @@ pub struct Loaded(pub Arc<Game>);
 
 #[derive(Clone, Debug)]
 pub struct Game {
-    pub database: LcfDataBase,
-    pub map_tree: LcfMapTree,
+    pub database: Arc<LcfDataBase>,
+    pub map_tree: Arc<LcfMapTree>,
     pub game_dir: PathBuf,
 }
 
@@ -94,8 +94,8 @@ fn check_asset(
             info!("Load completed");
             commands.entity(ent).despawn();
             commands.trigger(Loaded(Arc::new(Game {
-                database: database.0,
-                map_tree: map_tree.0,
+                database: database.clone(),
+                map_tree: map_tree.clone(),
                 game_dir: loading.path.clone(),
             })));
         }

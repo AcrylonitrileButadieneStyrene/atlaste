@@ -1,13 +1,15 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 use lcf::{ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit};
 
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {
         #[derive(Asset, Debug, TypePath)]
-        pub struct $asset(pub $type);
+        pub struct $asset(pub Arc<$type>);
 
         impl std::ops::Deref for $asset {
-            type Target = $type;
+            type Target = Arc<$type>;
 
             fn deref(&self) -> &Self::Target {
                 &self.0
@@ -30,7 +32,7 @@ macro_rules! loader {
                 let mut buf = Vec::new();
                 reader.read_to_end(&mut buf).await?;
                 match <$type>::read(&mut std::io::Cursor::new(buf)) {
-                    Ok(x) => Ok($asset(x)),
+                    Ok(x) => Ok($asset(Arc::new(x))),
                     Err(err) => Err(LcfAssetLoaderError::Parse(err.into())),
                 }
             }
