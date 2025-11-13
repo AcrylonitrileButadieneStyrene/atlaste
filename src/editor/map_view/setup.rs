@@ -5,6 +5,7 @@ use bevy::{
     color::palettes::{basic::BLACK, tailwind},
     prelude::*,
     sprite_render::{TileData, TilemapChunk, TilemapChunkTileData},
+    ui_widgets::observe,
 };
 
 #[derive(EntityEvent)]
@@ -32,9 +33,13 @@ pub fn on_setup_tiles(setup: On<Finalize>, mut commands: Commands) {
     commands.spawn((
         Name::new("Map tiles"),
         ChildOf(setup.entity),
+        Transform::IDENTITY,
+        Visibility::Inherited,
+        Pickable::IGNORE,
         Children::spawn((
             Spawn((
                 Name::new("Lower tiles"),
+                Pickable::IGNORE,
                 TilemapChunk {
                     tileset: setup.chipset.clone(),
                     tile_display_size: UVec2::splat(1),
@@ -47,8 +52,8 @@ pub fn on_setup_tiles(setup: On<Finalize>, mut commands: Commands) {
                         .collect(),
                 ),
             )),
-            Spawn((Name::new("Events"),)),      // todo
-            Spawn((Name::new("Upper tiles"),)), // todo
+            Spawn((Name::new("Events"), Pickable::IGNORE)), // todo
+            Spawn((Name::new("Upper tiles"), Pickable::IGNORE)), // todo
         )),
     ));
 }
@@ -63,6 +68,7 @@ pub fn on_setup_background(
         Name::new("Map background"),
         ChildOf(setup.entity),
         Transform::from_translation(-Vec3::Z),
+        Visibility::Inherited,
         Children::spawn((
             // furthest back
             Spawn((
@@ -72,19 +78,21 @@ pub fn on_setup_background(
                     setup.map.height as f32 + 0.2,
                 ))),
                 MeshMaterial2d(materials.add(ColorMaterial::from_color(tailwind::ZINC_600))),
-                ChildOf(setup.entity),
+                observe(|clicked: On<Pointer<Click>>| {
+                    info!("{clicked:?}");
+                }),
             )),
             // prevent transparency from seeing the window outline
             Spawn((
                 Name::new("Backdrop"),
+                Pickable::IGNORE,
                 Mesh2d(meshes.add(Rectangle::new(
                     setup.map.width as f32,
                     setup.map.height as f32,
                 ))),
                 MeshMaterial2d(materials.add(ColorMaterial::from_color(BLACK))),
-                ChildOf(setup.entity),
             )),
-            Spawn((Name::new("Panorama"),)), // todo, will require shader (probably)
+            Spawn((Name::new("Panorama"), Pickable::IGNORE)), // todo, will require shader (probably)
         )),
     ));
 }

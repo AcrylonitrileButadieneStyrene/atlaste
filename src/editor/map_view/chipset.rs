@@ -28,7 +28,7 @@ pub struct Loading(pub Handle<Image>);
 
 pub fn check_load(
     asset_server: Res<AssetServer>,
-    query: Query<(Entity, &super::map_unit::MapUnit, &Loading)>,
+    query: Query<(Entity, &super::map_unit::Loading, &Loading)>,
     fallback: Res<Fallback>,
     mut images: ResMut<Assets<Image>>,
     mut commands: Commands,
@@ -56,7 +56,10 @@ pub fn check_load(
             }
         };
 
-        commands.entity(entity).remove::<Loading>();
+        commands
+            .entity(entity)
+            .remove::<super::map_unit::Loading>()
+            .remove::<Loading>();
 
         let Some(handle) = handle else {
             continue;

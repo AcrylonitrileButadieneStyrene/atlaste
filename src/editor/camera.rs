@@ -1,7 +1,4 @@
-use bevy::{
-    color::palettes::tailwind::STONE_950, picking::hover::HoverMap, prelude::*,
-    window::PrimaryWindow,
-};
+use bevy::{color::palettes::tailwind::STONE_950, picking::hover::HoverMap, prelude::*};
 
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(ClearColor(Color::from(STONE_950)));
@@ -16,16 +13,16 @@ pub fn setup(mut commands: Commands) {
     ));
 }
 
-pub fn check_movement(
+pub fn disable_when_hovering_over_ui(
     mut camera: Query<&mut bevy_pancam::PanCam>,
     hover: Res<HoverMap>,
-    window: Query<Entity, With<PrimaryWindow>>,
+    is_ui: Query<Has<Node>>,
 ) -> Result {
-    let window = window.single()?;
-
-    // if all of the pointer devices are hovering over the window (no ui elements)
-    // then the camera is enabled and the map can be moved around
-    camera.single_mut()?.enabled = hover.iter().all(|(_, hits)| hits.contains_key(&window));
+    // actually you can just check if they are hovering over ui nodes
+    camera.single_mut()?.enabled = !hover
+        .iter()
+        .flat_map(|(_, hits)| hits.iter().map(|(entity, _)| *entity))
+        .any(|entity| is_ui.get(entity).unwrap_or_default());
 
     Ok(())
 }

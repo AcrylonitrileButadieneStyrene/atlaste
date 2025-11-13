@@ -10,7 +10,7 @@ impl bevy::prelude::Plugin for Plugin {
             .add_systems(Startup, camera::setup)
             .add_systems(
                 Update,
-                (camera::check_movement.before(bevy_pancam::PanCamSystems),),
+                camera::disable_when_hovering_over_ui.before(bevy_pancam::PanCamSystems),
             );
     }
 }

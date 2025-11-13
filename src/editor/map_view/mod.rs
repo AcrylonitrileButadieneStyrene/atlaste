@@ -29,8 +29,7 @@ pub fn on_add(
     let map = asset_server.load(game.game_dir.join(format!("Map{:0>4}.lmu", trigger.0)));
 
     commands.spawn((
-        map_unit::MapUnit(map),
-        map_unit::Loading,
+        map_unit::Loading(map),
         Transform::default(),
         Visibility::default(),
     ));

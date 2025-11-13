@@ -17,6 +17,7 @@ features = [
     "bevy_image",
     "bevy_input_focus",
     "bevy_log",
+    "bevy_mesh_picking_backend",
     "bevy_picking",
     "bevy_render",
     "bevy_scene",
