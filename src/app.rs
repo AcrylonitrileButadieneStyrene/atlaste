@@ -4,7 +4,7 @@ use crate::settings::Settings;
 
 pub fn run(args: crate::Args) -> AppExit {
     let mut app = App::new();
-    app.insert_resource(bevy::winit::WinitSettings::desktop_app())
+    app.insert_resource(bevy::winit::WinitSettings::mobile())
         .add_plugins((
             default_plugins(),
             MeshPickingPlugin,

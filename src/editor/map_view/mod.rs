@@ -1,22 +1,25 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite_render::Material2dPlugin};
 
 use crate::state::GameData;
 
 pub mod chipset;
 pub mod map_unit;
+pub mod panorama;
 pub mod setup;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, chipset::setup)
+        app.add_plugins(Material2dPlugin::<panorama::Material>::default())
+            .add_systems(Startup, chipset::setup)
             .add_systems(
                 Update,
                 (map_unit::check_load, chipset::check_load).run_if(resource_exists::<GameData>),
             )
             .add_observer(on_add)
-            .add_observer(setup::on_setup_tiles)
-            .add_observer(setup::on_setup_background);
+            .add_observer(setup::on_spawn_tiles)
+            .add_observer(setup::on_spawn_background)
+            .add_observer(panorama::on_spawn);
     }
 }
 

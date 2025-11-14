@@ -75,10 +75,6 @@ pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
     )
 }
 
-// the app only updates when the mouse moves
-// so this is incredibly buggy looking
-// the popups can stay up forever instead of just 0.3s
-// oh well
 pub fn check_hover(
     hover: Res<HoverMap>,
     popups: Query<(Entity, &Children), With<Marker>>,

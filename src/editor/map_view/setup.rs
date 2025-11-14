@@ -9,13 +9,13 @@ use bevy::{
 };
 
 #[derive(EntityEvent)]
-pub struct Finalize {
+pub struct Spawn {
     pub entity: Entity,
     pub map: Arc<LcfMapUnit>,
     pub chipset: Handle<Image>,
 }
 
-pub fn on_setup_tiles(setup: On<Finalize>, mut commands: Commands) {
+pub fn on_spawn_tiles(setup: On<Spawn>, mut commands: Commands) {
     let chunk_size = UVec2::new(setup.map.width, setup.map.height);
     let convert = |id| -> u16 {
         match id {
@@ -31,14 +31,14 @@ pub fn on_setup_tiles(setup: On<Finalize>, mut commands: Commands) {
     };
 
     commands.spawn((
-        Name::new("Map tiles"),
+        Name::new("Tiles"),
         ChildOf(setup.entity),
         Transform::IDENTITY,
         Visibility::Inherited,
         Pickable::IGNORE,
         Children::spawn((
             Spawn((
-                Name::new("Lower tiles"),
+                Name::new("Lower"),
                 Pickable::IGNORE,
                 TilemapChunk {
                     tileset: setup.chipset.clone(),
@@ -53,26 +53,26 @@ pub fn on_setup_tiles(setup: On<Finalize>, mut commands: Commands) {
                 ),
             )),
             Spawn((Name::new("Events"), Pickable::IGNORE)), // todo
-            Spawn((Name::new("Upper tiles"), Pickable::IGNORE)), // todo
+            Spawn((Name::new("Upper"), Pickable::IGNORE)),  // todo
         )),
     ));
 }
 
-pub fn on_setup_background(
-    setup: On<Finalize>,
+pub fn on_spawn_background(
+    setup: On<Spawn>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn((
-        Name::new("Map background"),
+        Name::new("Background"),
         ChildOf(setup.entity),
         Transform::from_translation(-Vec3::Z),
         Visibility::Inherited,
         Children::spawn((
-            // furthest back
             Spawn((
                 Name::new("Outline"),
+                Transform::from_translation(Vec3::new(0., 0., -2.)),
                 Mesh2d(meshes.add(Rectangle::new(
                     setup.map.width as f32 + 0.2,
                     setup.map.height as f32 + 0.2,
@@ -84,7 +84,8 @@ pub fn on_setup_background(
             )),
             // prevent transparency from seeing the window outline
             Spawn((
-                Name::new("Backdrop"),
+                Name::new("Cover"),
+                Transform::from_translation(Vec3::new(0., 0., -1.)),
                 Pickable::IGNORE,
                 Mesh2d(meshes.add(Rectangle::new(
                     setup.map.width as f32,
@@ -92,7 +93,6 @@ pub fn on_setup_background(
                 ))),
                 MeshMaterial2d(materials.add(ColorMaterial::from_color(BLACK))),
             )),
-            Spawn((Name::new("Panorama"), Pickable::IGNORE)), // todo, will require shader (probably)
         )),
     ));
 }

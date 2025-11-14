@@ -16,7 +16,7 @@ pub fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
             depth_or_array_layers: 480,
         },
         TextureDimension::D2,
-        &[0x00, 0xFF, 0x00, 0xFF],
+        &[0x00, 0xFF, 0x00, 0x00],
         TextureFormat::bevy_default(),
         RenderAssetUsages::RENDER_WORLD,
     ));
@@ -24,7 +24,13 @@ pub fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
 }
 
 #[derive(Component)]
-pub struct Loading(pub Handle<Image>);
+pub enum Loading {
+    Regular {
+        png: Handle<Image>,
+        bmp: Handle<Image>,
+    },
+    Fallback,
+}
 
 pub fn check_load(
     asset_server: Res<AssetServer>,
@@ -35,37 +41,44 @@ pub fn check_load(
     map_units: Res<Assets<MapUnitAsset>>,
 ) {
     for (entity, map_unit, chipset) in query.iter() {
-        let handle = match asset_server.get_load_state(&chipset.0) {
-            Some(LoadState::Loading) => continue,
-            Some(LoadState::Loaded) => {
-                let image = images.get_mut(&chipset.0).unwrap();
-                let pixels = image.data.take().unwrap();
-                // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
-                image.data = Some(fix_pixels(pixels));
-                image.reinterpret_size(Extent3d {
-                    width: 16,
-                    height: 16,
-                    depth_or_array_layers: 480,
-                });
-                Some(chipset.0.clone())
+        let handle = match chipset {
+            Loading::Regular { png, bmp } => {
+                match asset_server
+                    .get_load_state(png)
+                    .zip(asset_server.get_load_state(bmp))
+                {
+                    Some((LoadState::Loaded, _)) => Some(png.clone()),
+                    Some((_, LoadState::Loaded)) => Some(bmp.clone()),
+                    // either is loading but neither is loaded
+                    Some((LoadState::Loading, _) | (_, LoadState::Loading)) => continue,
+                    None | Some((LoadState::NotLoaded, _) | (_, LoadState::NotLoaded)) => {
+                        error!("ChipSet did not start loading");
+                        None
+                    }
+                    Some((LoadState::Failed(_), LoadState::Failed(_))) => None,
+                }
             }
-            Some(LoadState::Failed(_)) => Some(fallback.0.clone()),
-            Some(LoadState::NotLoaded) | None => {
-                error!("Unloaded image was marked as loading");
-                None
-            }
-        };
+            Loading::Fallback => None,
+        }
+        .inspect(|handle| {
+            let image = images.get_mut(handle).unwrap();
+            let pixels = image.data.take().unwrap();
+            // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
+            image.data = Some(fix_pixels(pixels));
+            image.reinterpret_size(Extent3d {
+                width: 16,
+                height: 16,
+                depth_or_array_layers: 480,
+            });
+        })
+        .unwrap_or_else(|| fallback.0.clone());
 
         commands
             .entity(entity)
             .remove::<super::map_unit::Loading>()
             .remove::<Loading>();
 
-        let Some(handle) = handle else {
-            continue;
-        };
-
-        commands.trigger(super::setup::Finalize {
+        commands.trigger(super::setup::Spawn {
             entity,
             map: map_units.get(&map_unit.0).unwrap().0.clone(),
             chipset: handle,

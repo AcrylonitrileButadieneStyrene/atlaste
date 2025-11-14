@@ -13,18 +13,15 @@ pub fn check_load(
     game: Res<GameData>,
     code_page: Res<CurrentCodePage>,
     mut commands: Commands,
-    fallback: Res<super::chipset::Fallback>,
 ) {
     for (entity, loading) in query.iter() {
         match asset_server.get_load_state(&loading.0) {
+            Some(LoadState::Loading) => (),
             Some(LoadState::NotLoaded) | None => {
-                error!("Unloaded map unit was marked as loading");
-                continue;
+                error!("Map did not start loading");
             }
-            Some(LoadState::Loading) => continue,
             Some(LoadState::Failed(_)) => {
-                error!("Unloaded map unit was marked as loading");
-                continue;
+                error!("Failed to load map");
             }
             Some(LoadState::Loaded) => {
                 // will always be present, it just loaded
@@ -34,17 +31,19 @@ pub fn check_load(
                     Some(chipset) => {
                         let chipset = &game.database.chipsets[chipset as usize - 1].file;
                         let file = code_page.0.to_encoding().decode(chipset).0.to_string();
+                        let base = game.game_dir.join("ChipSet/").join(file);
 
                         // bevy 18 will add a setting to loading images but it does not help me because chipsets are not 1x480, they are 30x16
-                        asset_server.load(game.game_dir.join("ChipSet/").join(file + ".png")) // TODO: it can be a .bmp too
+                        super::chipset::Loading::Regular {
+                            png: asset_server.load(base.with_added_extension("png")),
+                            bmp: asset_server.load(base.with_added_extension("bmp")),
+                        }
                     }
-                    None => fallback.0.clone(),
+                    None => super::chipset::Loading::Fallback,
                 };
 
-                commands
-                    .entity(entity)
-                    .insert(super::chipset::Loading(texture));
+                commands.entity(entity).insert(texture);
             }
-        };
+        }
     }
 }
