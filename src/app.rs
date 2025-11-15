@@ -10,8 +10,9 @@ pub fn run(args: crate::Args) -> AppExit {
             MeshPickingPlugin,
             atlaste_lcf::Plugin,
             atlaste_ui::Plugin,
-            crate::state::Plugin,
             crate::editor::Plugin,
+            crate::state::Plugin,
+            crate::utils::Plugin,
         ))
         .init_resource::<crate::state::CurrentCodePage>()
         .insert_resource(

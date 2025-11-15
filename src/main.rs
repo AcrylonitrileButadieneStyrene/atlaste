@@ -5,6 +5,7 @@ mod app;
 mod editor;
 mod settings;
 mod state;
+mod utils;
 
 #[derive(Debug, clap::Parser)]
 struct Args {
