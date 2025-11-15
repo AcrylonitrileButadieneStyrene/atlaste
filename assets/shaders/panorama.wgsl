@@ -23,8 +23,9 @@ fn fragment(
 
     let horizontal = f32(((options >> 18) & 63)) - 15;
     let vertical = f32(((options >> 23) & 63)) - 15;
+    let disable = (f32(((options >> 28) & 1)) - 1) * -1; // if true 0 else 1
     let speed = vec2(horizontal, vertical);
-    let uv = fract(in.uv - vec2(horizontal, vertical) * globals.time / SCROLL_SPEED);
+    let uv = fract(in.uv - vec2(horizontal, vertical) * globals.time / SCROLL_SPEED * disable);
     
     return textureSample(texture, texture_sampler, fract(uv * size / vec2<f32>(textureDimensions(texture))));
 }

@@ -89,7 +89,7 @@ pub fn on_click(
     mut commands: Commands,
     old: Query<Entity, With<Selected>>,
 ) {
-    if filter.get(event.entity).is_err() {
+    if event.button != PointerButton::Primary || filter.get(event.entity).is_err() {
         return;
     }
 

@@ -2,13 +2,13 @@ use bevy::feathers::theme::ThemeToken;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, strum::VariantArray, strum::EnumProperty)]
 pub enum CodePage {
-    #[default]
     #[strum(props(Name = "West European"))]
     Ascii,
     #[strum(props(Name = "East European"))]
     Eastern,
     #[strum(props(Name = "Cyrillic"))]
     Cyrillic,
+    #[default]
     #[strum(props(Name = "Japanese"))]
     ShiftJIS,
     #[strum(props(Name = "Chinese"))]

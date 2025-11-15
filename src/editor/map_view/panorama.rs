@@ -7,7 +7,7 @@ use crate::state::{CurrentCodePage, GameData};
 pub fn on_spawn(
     setup: On<super::setup::Spawn>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    rectangle: Res<crate::utils::unit_mesh::UnitRectangle>,
     mut panorama_materials: ResMut<Assets<Material>>,
     code_page: Res<CurrentCodePage>,
     game: Res<GameData>,
@@ -24,11 +24,13 @@ pub fn on_spawn(
     commands.spawn((
         Name::new("Panorama"),
         ChildOf(setup.entity),
-        Pickable::IGNORE,
-        Mesh2d(meshes.add(Rectangle::new(
+        Transform::from_scale(Vec3::new(
             setup.map.width as f32,
             setup.map.height as f32,
-        ))),
+            1.0,
+        )),
+        Pickable::IGNORE,
+        Mesh2d(rectangle.0.clone()),
         MeshMaterial2d(panorama_materials.add(Material {
             texture: asset_server.load({
                 game.game_dir
@@ -78,8 +80,10 @@ struct Options {
     horizontal: modular_bitfield::specifiers::B5,
     #[skip(getters)]
     vertical: modular_bitfield::specifiers::B5,
+    #[skip(getters)]
+    disable: modular_bitfield::specifiers::B1,
     #[skip]
-    __padding: modular_bitfield::specifiers::B4,
+    __padding: modular_bitfield::specifiers::B3,
 }
 
 const fn convert_i32_to_b5(val: i32) -> u8 {
