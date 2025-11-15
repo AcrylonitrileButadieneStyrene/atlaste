@@ -6,5 +6,6 @@ publish = false
 
 [dependencies]
 bevy = { workspace = true }
+crc32fast = "1.5.0"
 thiserror = "2.0"
 lcf = "0.8.0"

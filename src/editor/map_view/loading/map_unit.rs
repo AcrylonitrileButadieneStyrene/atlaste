@@ -25,7 +25,7 @@ pub fn check_load(
             }
             Some(LoadState::Loaded) => {
                 // will always be present, it just loaded
-                let map = &map_units.get(&loading.0).unwrap();
+                let map = map_units.get(&loading.0).unwrap();
 
                 let texture = match map.chipset {
                     Some(chipset) => {

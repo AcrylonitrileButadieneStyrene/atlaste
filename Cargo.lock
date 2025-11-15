@@ -421,6 +421,7 @@ name = "atlaste_lcf"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "crc32fast",
  "lcf",
  "thiserror 2.0.17",
 ]

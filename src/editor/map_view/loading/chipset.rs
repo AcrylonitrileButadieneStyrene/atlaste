@@ -80,7 +80,7 @@ pub fn check_load(
 
         commands.trigger(super::super::setup::Spawn {
             entity,
-            map: map_units.get(&map_unit.0).unwrap().0.clone(),
+            map: map_units.get(&map_unit.0).unwrap().data.clone(),
             chipset: handle,
         });
     }

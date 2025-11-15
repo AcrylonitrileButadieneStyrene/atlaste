@@ -6,13 +6,16 @@ use lcf::{ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit};
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {
         #[derive(Asset, Debug, TypePath)]
-        pub struct $asset(pub Arc<$type>);
+        pub struct $asset {
+            pub data: Arc<$type>,
+            pub hash: u32,
+        }
 
         impl std::ops::Deref for $asset {
             type Target = Arc<$type>;
 
             fn deref(&self) -> &Self::Target {
-                &self.0
+                &self.data
             }
         }
 
@@ -31,8 +34,12 @@ macro_rules! loader {
             ) -> Result<Self::Asset, Self::Error> {
                 let mut buf = Vec::new();
                 reader.read_to_end(&mut buf).await?;
+                let hash = crc32fast::hash(&buf);
                 match <$type>::read(&mut std::io::Cursor::new(buf)) {
-                    Ok(x) => Ok($asset(Arc::new(x))),
+                    Ok(x) => Ok($asset {
+                        data: Arc::new(x),
+                        hash,
+                    }),
                     Err(err) => Err(LcfAssetLoaderError::Parse(err.into())),
                 }
             }
