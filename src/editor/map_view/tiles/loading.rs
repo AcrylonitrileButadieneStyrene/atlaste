@@ -83,22 +83,14 @@ pub fn check(
 
         let handle = match handle {
             Some(State::Loaded(handle, palette)) => {
+                let alpha_key = palette.map(|palette| {
+                    (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32)
+                });
+
                 let image = images.get_mut(&handle).unwrap();
-                let mut pixels = image.data.take().unwrap();
+                let pixels = image.data.take().unwrap();
 
-                if let Some(palette) = palette {
-                    let transparent =
-                        (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32);
-                    for pixel in pixels.chunks_exact_mut(4) {
-                        let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;
-                        if color == transparent {
-                            pixel[3] = 0x00;
-                        }
-                    }
-                }
-
-                // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
-                image.data = Some(fix_pixels(pixels));
+                image.data = Some(post_processing(pixels, alpha_key));
                 image.reinterpret_size(Extent3d {
                     width: 16,
                     height: 16,
@@ -118,11 +110,16 @@ pub fn check(
     }
 }
 
-// there is definitely a better way to do this but this worked first try so i will not be changing it
 #[must_use]
-fn fix_pixels(pixels: Vec<u8>) -> Vec<u8> {
+fn post_processing(pixels: Vec<u8>, alpha_key: Option<u32>) -> Vec<u8> {
     let mut new_pixels = Vec::with_capacity(pixels.len());
 
+    // todo: add region for autotiling terrain and water
+
+    // rearrange the pixels from squares to contiguous blocks
+    // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
+    // there is definitely a better way to do this but this worked first try so i will not be changing it
+    // ^ it will need to be rewritten once the above todo is implemented
     for tile_index in 0..480 {
         let start_x = tile_index % 30;
         let start_y = tile_index / 30;
@@ -133,6 +130,17 @@ fn fix_pixels(pixels: Vec<u8>) -> Vec<u8> {
                 let pixel =
                     pixels[(start_x * 16 + add_x + (start_y * 16 + add_y) * 480) * 4 + byte];
                 new_pixels.push(pixel);
+            }
+        }
+    }
+
+    // make the 1st color in the palette transparent
+    // todo: figure out if it is even valid for a tileset to not have a palette
+    if let Some(key) = alpha_key {
+        for pixel in new_pixels.chunks_exact_mut(4) {
+            let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;
+            if color == key {
+                pixel[3] = 0x00;
             }
         }
     }
