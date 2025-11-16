@@ -8,7 +8,7 @@ pub mod theme;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
-    fn build(&self, app: &mut bevy::app::App) {
+    fn build(&self, app: &mut App) {
         app.add_plugins((
             bevy::feathers::FeathersPlugin,
             bevy::ui_widgets::ButtonPlugin,
