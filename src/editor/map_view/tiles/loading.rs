@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use atlaste_image::IndexedImage;
 use bevy::{asset::LoadState, prelude::*, render::render_resource::Extent3d};
 
@@ -41,6 +43,11 @@ pub fn start_on_add_map(
     Ok(())
 }
 
+enum State {
+    Loading,
+    Loaded(Handle<Image>, Option<Arc<[u8]>>),
+}
+
 pub fn check(
     asset_server: Res<AssetServer>,
     query: Query<(Entity, &Loading)>,
@@ -64,37 +71,45 @@ pub fn check(
             }
             Some((LoadState::Failed(_), LoadState::Failed(_))) => None,
         }
-        .map(|handle| {
-            let IndexedImage {
-                image: handle,
-                palette,
-            } = indexed_images.get(&handle).unwrap();
+        .and_then(|handle| {
+            // it is so hopeless
+            let IndexedImage { image, palette } = indexed_images.get(&handle).unwrap();
+            match asset_server.get_load_state(image) {
+                Some(LoadState::Loaded) => Some(State::Loaded(image.clone(), palette.clone())),
+                Some(LoadState::Loading) => Some(State::Loading),
+                None | Some(LoadState::NotLoaded | LoadState::Failed(_)) => None,
+            }
+        });
 
-            let image = images.get_mut(handle).unwrap();
-            let mut pixels = image.data.take().unwrap();
+        let handle = match handle {
+            Some(State::Loaded(handle, palette)) => {
+                let image = images.get_mut(&handle).unwrap();
+                let mut pixels = image.data.take().unwrap();
 
-            if let Some(palette) = dbg!(palette) {
-                let transparent =
-                    (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32);
-                for pixel in pixels.chunks_exact_mut(4) {
-                    let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;
-                    if color == transparent {
-                        pixel[3] = 0x00;
+                if let Some(palette) = palette {
+                    let transparent =
+                        (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32);
+                    for pixel in pixels.chunks_exact_mut(4) {
+                        let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;
+                        if color == transparent {
+                            pixel[3] = 0x00;
+                        }
                     }
                 }
+
+                // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
+                image.data = Some(fix_pixels(pixels));
+                image.reinterpret_size(Extent3d {
+                    width: 16,
+                    height: 16,
+                    depth_or_array_layers: 480,
+                });
+
+                handle
             }
-
-            // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
-            image.data = Some(fix_pixels(pixels));
-            image.reinterpret_size(Extent3d {
-                width: 16,
-                height: 16,
-                depth_or_array_layers: 480,
-            });
-
-            handle.clone()
-        })
-        .unwrap_or_else(|| fallback.0.clone());
+            Some(State::Loading) => continue,
+            None => fallback.0.clone(),
+        };
 
         commands
             .entity(entity)
