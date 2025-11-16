@@ -19,7 +19,6 @@ macro_rules! loader {
             }
         }
 
-        #[derive(Default)]
         pub struct $loader;
         impl bevy::asset::AssetLoader for $loader {
             type Asset = $asset;

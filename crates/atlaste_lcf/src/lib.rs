@@ -15,9 +15,9 @@ impl bevy::prelude::Plugin for Plugin {
             .init_asset::<DataBaseAsset>()
             .init_asset::<MapTreeAsset>()
             .init_asset::<MapUnitAsset>()
-            .init_asset_loader::<DataBaseLoader>()
-            .init_asset_loader::<MapTreeLoader>()
-            .init_asset_loader::<MapUnitLoader>()
+            .register_asset_loader(DataBaseLoader)
+            .register_asset_loader(MapTreeLoader)
+            .register_asset_loader(MapUnitLoader)
             .add_systems(
                 Update,
                 check_asset.run_if(in_state(IsSomethingLoadingState::Yes)),

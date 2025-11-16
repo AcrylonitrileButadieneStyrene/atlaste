@@ -1,3 +1,4 @@
+use atlaste_image::IndexedImage;
 use bevy::{asset::LoadState, prelude::*, render::render_resource::Extent3d};
 
 use crate::{
@@ -7,8 +8,8 @@ use crate::{
 
 #[derive(Component)]
 pub struct Loading {
-    png: Handle<Image>,
-    bmp: Handle<Image>,
+    png: Handle<IndexedImage>,
+    bmp: Handle<IndexedImage>,
 }
 
 #[derive(Component)]
@@ -44,6 +45,7 @@ pub fn check(
     asset_server: Res<AssetServer>,
     query: Query<(Entity, &Loading)>,
     fallback: Res<super::Fallback>,
+    indexed_images: Res<Assets<IndexedImage>>,
     mut images: ResMut<Assets<Image>>,
     mut commands: Commands,
 ) {
@@ -62,9 +64,25 @@ pub fn check(
             }
             Some((LoadState::Failed(_), LoadState::Failed(_))) => None,
         }
-        .inspect(|handle| {
+        .map(|handle| {
+            let IndexedImage {
+                image: handle,
+                palette,
+            } = indexed_images.get(&handle).unwrap();
+
             let image = images.get_mut(handle).unwrap();
-            let pixels = image.data.take().unwrap();
+            let mut pixels = image.data.take().unwrap();
+
+            if let Some(palette) = dbg!(palette) {
+                let transparent =
+                    (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32);
+                for pixel in pixels.chunks_exact_mut(4) {
+                    let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;
+                    if color == transparent {
+                        pixel[3] = 0x00;
+                    }
+                }
+            }
 
             // wgpu reads the elements as lines on the image instead of as squares, so they need to be repacked
             image.data = Some(fix_pixels(pixels));
@@ -73,6 +91,8 @@ pub fn check(
                 height: 16,
                 depth_or_array_layers: 480,
             });
+
+            handle.clone()
         })
         .unwrap_or_else(|| fallback.0.clone());
 
