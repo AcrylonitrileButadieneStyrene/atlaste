@@ -8,10 +8,7 @@
 // so the size needs to be multiplied by this constant.
 // there are 16 pixels per tile in r2k.
 const TEXTURE_SCALE: f32 = 16;
-// yolo. randomly picked number.
-// i think RPG_RT.exe runs at 30 fps, not 60, but this looks the most accurate
-// (i am roughly comparing it to r48's speed, not either of the players)
-const SCROLL_SPEED: f32 = 60;
+const SCROLL_SPEED: f32 = 400; // random
 
 @fragment
 fn fragment(
@@ -21,6 +18,7 @@ fn fragment(
     let height = f32((options >> 9) & 1023);
     let size = vec2(width, height) * TEXTURE_SCALE;
 
+    // todo: it seems that this is meant to move proportionally to the size of the image
     let horizontal = f32(((options >> 18) & 63)) - 15;
     let vertical = f32(((options >> 23) & 63)) - 15;
     let disable = (f32(((options >> 28) & 1)) - 1) * -1; // if true 0 else 1
