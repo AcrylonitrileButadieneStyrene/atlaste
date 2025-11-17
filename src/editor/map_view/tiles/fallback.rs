@@ -12,7 +12,7 @@ pub fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         Extent3d {
             width: 16,
             height: 16,
-            depth_or_array_layers: 480,
+            depth_or_array_layers: 1080,
         },
         TextureDimension::D2,
         &[0x00, 0xFF, 0x00, 0x00],
