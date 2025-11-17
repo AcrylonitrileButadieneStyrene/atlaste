@@ -54,6 +54,7 @@ const fn convert(id: u16) -> u16 {
             let base = 12 + (index / 96) * 6;
             (index % 96 - col) * 5 + col + base
         }
+        4000..4600 => id - 3520,
         _ => 0, // todo
     }
 }

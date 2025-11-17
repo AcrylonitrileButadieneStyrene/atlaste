@@ -6,6 +6,10 @@ use bevy::{
 };
 use png::DecodingError;
 
+mod chipset;
+
+pub use chipset::image_to_chipset;
+
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
