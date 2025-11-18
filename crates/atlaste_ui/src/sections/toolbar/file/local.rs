@@ -4,30 +4,16 @@ use bevy::{
         rounded_corners::RoundedCorners,
     },
     prelude::*,
-    ui_widgets::{Activate, observe},
 };
 
 pub fn new() -> impl Bundle {
-    crate::components::menu_button::new(
-        "File",
-        (
-            Spawn(button(
-                ButtonProps {
-                    variant: ButtonVariant::Normal,
-                    corners: RoundedCorners::None,
-                },
-                disabled_on_wasm(),
-                Spawn(Text::new("Open local")),
-            )),
-            Spawn(button(
-                ButtonProps {
-                    variant: ButtonVariant::Normal,
-                    corners: RoundedCorners::None,
-                },
-                (),
-                Spawn(Text::new("Open remote")),
-            )),
-        ),
+    button(
+        ButtonProps {
+            variant: ButtonVariant::Normal,
+            corners: RoundedCorners::None,
+        },
+        disabled_on_wasm(),
+        Spawn(Text::new("Load local")),
     )
 }
 
@@ -38,9 +24,13 @@ fn disabled_on_wasm() -> impl Bundle {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn disabled_on_wasm() -> impl Bundle {
+    use bevy::ui_widgets::{Activate, observe};
+
     observe(|_: On<Activate>, mut commands: Commands| {
+        use bevy_simple_text_input::TextInputValue;
+
         commands.spawn(crate::components::modal::new(
-            "Open game from local path",
+            "Load game from local path",
             Spawn((
                 Node {
                     flex_grow: 1.,
@@ -88,7 +78,26 @@ fn disabled_on_wasm() -> impl Bundle {
                                 variant: ButtonVariant::Primary,
                                 corners: RoundedCorners::None,
                             },
-                            observe(|_event: On<Activate>| info!("load")),
+                            observe(
+                                |event: On<Activate>,
+                                 parent: Query<&ChildOf>,
+                                 children: Query<&Children>,
+                                 text: Query<&TextInputValue>,
+                                 mut commands: Commands|
+                                 -> Result {
+                                    let siblings =
+                                        children.get(parent.get(event.entity)?.parent())?;
+                                    for sibling in siblings {
+                                        let Ok(text) = text.get(*sibling) else {
+                                            continue;
+                                        };
+
+                                        commands
+                                            .trigger(super::LoadGameFrom(text.0.clone().into()));
+                                    }
+                                    Ok(())
+                                },
+                            ),
                             Spawn(Text::new("Load")),
                         )),
                     )),

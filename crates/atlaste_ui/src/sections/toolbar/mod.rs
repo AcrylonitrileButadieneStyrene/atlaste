@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
 };
 
-mod file;
+pub mod file;
 
 pub fn new() -> impl Bundle {
     (

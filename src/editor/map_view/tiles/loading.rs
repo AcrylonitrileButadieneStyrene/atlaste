@@ -27,15 +27,21 @@ pub fn start_on_add_map(
 ) -> Result {
     let MapUnit { map, .. } = map.get(spawn.entity)?;
 
-    let id = map.chipset.unwrap_or(1);
-    let bytes = &game.database.chipsets[id as usize - 1].file;
+    let bytes = &game.database.chipsets[map.chipset as usize - 1].file;
     let file = code_page.0.to_encoding().decode(bytes).0.to_string();
-    let base = game.game_dir.join("ChipSet/").join(file);
 
     // bevy 18 will add a setting to loading images but it does not help me because chipsets are not 1x480, they are 30x16
     let texture = Loading {
-        png: asset_server.load(base.with_added_extension("png")),
-        bmp: asset_server.load(base.with_added_extension("bmp")),
+        png: asset_server.load(
+            game.game_dir
+                .resolve(&format!("ChipSet/{file}.png"))
+                .unwrap(),
+        ),
+        bmp: asset_server.load(
+            game.game_dir
+                .resolve(&format!("ChipSet/{file}.bmp"))
+                .unwrap(),
+        ),
     };
 
     commands.entity(spawn.entity).insert(texture);

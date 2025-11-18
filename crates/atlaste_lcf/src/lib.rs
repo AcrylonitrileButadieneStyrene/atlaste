@@ -1,6 +1,6 @@
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
-use bevy::prelude::*;
+use bevy::{asset::AssetPath, prelude::*};
 
 mod asset_loader;
 pub use asset_loader::*;
@@ -34,7 +34,7 @@ enum IsSomethingLoadingState {
 }
 
 #[derive(Debug, Event)]
-pub struct Load(pub PathBuf);
+pub struct Load(pub AssetPath<'static>);
 
 #[derive(Debug, Event)]
 pub struct Loaded(pub Arc<Game>);
@@ -45,14 +45,14 @@ pub struct Game {
     pub database_hash: u32,
     pub map_tree: Arc<LcfMapTree>,
     pub map_tree_hash: u32,
-    pub game_dir: PathBuf,
+    pub game_dir: AssetPath<'static>,
 }
 
 #[derive(Component)]
 struct Loading {
     database: Handle<DataBaseAsset>,
     map_tree: Handle<MapTreeAsset>,
-    path: PathBuf,
+    path: AssetPath<'static>,
 }
 
 fn on_load(
@@ -63,8 +63,8 @@ fn on_load(
 ) {
     info!("Load started");
     let path = load.0.clone();
-    let database = asset_server.load::<DataBaseAsset>(path.join("RPG_RT.ldb"));
-    let map_tree = asset_server.load::<MapTreeAsset>(path.join("RPG_RT.lmt"));
+    let database = asset_server.load::<DataBaseAsset>(path.resolve("RPG_RT.ldb").unwrap());
+    let map_tree = asset_server.load::<MapTreeAsset>(path.resolve("RPG_RT.lmt").unwrap());
     commands.spawn(Loading {
         database,
         map_tree,

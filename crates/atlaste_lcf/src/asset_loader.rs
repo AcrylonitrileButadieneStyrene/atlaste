@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::prelude::*;
-use lcf::{ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit};
+use lcf::{ConvertExt as _, ldb::LcfDataBase, lmt::LcfMapTree, lmu::LcfMapUnit};
 
 macro_rules! loader {
     ($loader:ident, $asset:ident, $type:ty, ($exts:expr)) => {

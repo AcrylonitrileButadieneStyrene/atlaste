@@ -3,6 +3,7 @@
 
 mod app;
 mod editor;
+mod interconnect;
 mod settings;
 mod state;
 mod utils;

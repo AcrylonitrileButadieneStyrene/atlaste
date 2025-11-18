@@ -14,6 +14,7 @@ pub fn run(args: crate::Args) -> AppExit {
             crate::editor::Plugin,
             crate::state::Plugin,
             crate::utils::Plugin,
+            crate::interconnect::Plugin,
         ))
         .init_resource::<crate::state::CurrentCodePage>()
         .insert_resource(
@@ -33,7 +34,7 @@ pub fn run(args: crate::Args) -> AppExit {
 
     if let Some(game_path) = args.game_dir {
         app.add_systems(Startup, move |mut commands: Commands| {
-            commands.trigger(atlaste_lcf::Load(game_path.clone()));
+            commands.trigger(atlaste_lcf::Load(game_path.clone().into()));
         });
     }
 

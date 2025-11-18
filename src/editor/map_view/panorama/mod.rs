@@ -1,3 +1,4 @@
+use atlaste_lcf::lcf::lmu::PanoramaOptions;
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 
 use crate::{
@@ -42,19 +43,27 @@ fn on_spawn(
             MeshMaterial2d(panorama_materials.add(Material {
                 texture: asset_server.load({
                     game.game_dir
-                        .join("Panorama/")
-                        .join(code_page.0.to_encoding().decode(file).0.to_string())
-                        .with_added_extension("png") // todo: this one can also be a .bmp
+                        .resolve(&format!(
+                            "Panorama/{}.png", // todo: this one can also be a .bmp
+                            code_page.0.to_encoding().decode(file).0.to_string()
+                        ))
+                        .unwrap()
                 }),
                 options: {
-                    let horizontal = convert_i32_to_b5(map.panorama.horizontal_auto_scroll_speed);
-                    let vertical = convert_i32_to_b5(map.panorama.vertical_auto_scroll_speed);
+                    let convert = |opt: &PanoramaOptions| {
+                        (match opt {
+                            PanoramaOptions::NoLoop | PanoramaOptions::NoAutoscroll => 0,
+                            PanoramaOptions::Autoscroll(x) => *x,
+                        } + 15) as u8
+                            % 31
+                    };
+
                     u32::from_ne_bytes(
                         Options::new()
                             .with_width(map.width as u16)
                             .with_height(map.height as u16)
-                            .with_horizontal(horizontal)
-                            .with_vertical(vertical)
+                            .with_horizontal(convert(&map.panorama.horizontal))
+                            .with_vertical(convert(&map.panorama.vertical))
                             .into_bytes(),
                     )
                 },
@@ -63,11 +72,4 @@ fn on_spawn(
     }
 
     Ok(())
-}
-
-const fn convert_i32_to_b5(val: i32) -> u8 {
-    debug_assert!(val >= -15, "too small, i5::MIN is -15");
-    debug_assert!(val <= 16, "too big, i5::MAX is 16");
-
-    (val + 15) as u8 % 31
 }

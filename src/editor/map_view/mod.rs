@@ -22,7 +22,11 @@ fn on_add(
     game: Res<GameData>,
     asset_server: Res<AssetServer>,
 ) {
-    let map = asset_server.load(game.game_dir.join(format!("Map{:0>4}.lmu", trigger.0)));
+    let map = asset_server.load(
+        game.game_dir
+            .resolve(&format!("Map{:0>4}.lmu", trigger.0))
+            .unwrap(),
+    );
 
     commands.spawn((
         map_unit::Loading(map),
