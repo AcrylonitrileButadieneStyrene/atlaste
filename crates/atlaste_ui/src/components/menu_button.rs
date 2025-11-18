@@ -1,6 +1,9 @@
 use bevy::{
     ecs::spawn::SpawnableList,
-    feathers::controls::{ButtonProps, ButtonVariant, button},
+    feathers::{
+        controls::{ButtonProps, ButtonVariant, button},
+        theme::{ThemeBackgroundColor, ThemeBorderColor},
+    },
     picking::hover::HoverMap,
     prelude::*,
     ui_widgets::{Activate, observe},
@@ -64,11 +67,16 @@ pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
                 Node {
                     position_type: PositionType::Absolute,
                     top: px(crate::sections::TITLE_BAR_HEIGHT),
+                    flex_direction: FlexDirection::Column,
+                    padding: UiRect::all(px(4)),
+                    row_gap: px(4),
+                    border: UiRect::all(px(1)),
                     ..Default::default()
                 },
                 Visibility::Hidden,
                 ZIndex(2),
-                BackgroundColor(Color::srgb_u8(0xff, 0, 0)),
+                ThemeBackgroundColor(crate::theme::tokens::PANEL_BACKGROUND),
+                ThemeBorderColor(crate::theme::tokens::PANEL_BORDER),
                 Children::spawn(children),
             )),
         )),

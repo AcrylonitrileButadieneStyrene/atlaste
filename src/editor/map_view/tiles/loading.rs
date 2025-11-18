@@ -84,11 +84,11 @@ pub fn check(
         let handle = match handle {
             Some(State::Loaded(handle, palette)) => {
                 let alpha_key = palette.map(|palette| {
-                    (palette[0] as u32) << 16 | (palette[1] as u32) << 8 | (palette[2] as u32)
+                    u32::from(palette[0]) << 16 | u32::from(palette[1]) << 8 | u32::from(palette[2])
                 });
 
-                let mut image = images.get_mut(&handle).unwrap();
-                atlaste_image::image_to_chipset(&mut image, alpha_key);
+                let image = images.get_mut(&handle).unwrap();
+                atlaste_image::image_to_chipset(image, alpha_key);
 
                 handle
             }

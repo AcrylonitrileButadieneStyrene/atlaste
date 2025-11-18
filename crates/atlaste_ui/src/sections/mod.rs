@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 pub mod map_tree;
 pub mod settings;
-pub mod title_bar;
+pub mod toolbar;
 
 pub const TITLE_BAR_HEIGHT: f32 = 28.;
 
@@ -23,7 +23,7 @@ pub(crate) fn setup(mut commands: Commands) {
         },
         Pickable::IGNORE,
         Children::spawn((
-            Spawn(crate::sections::title_bar::new()),
+            Spawn(crate::sections::toolbar::new()),
             Spawn(crate::sections::map_tree::new()),
             Spawn(crate::sections::settings::new()),
         )),

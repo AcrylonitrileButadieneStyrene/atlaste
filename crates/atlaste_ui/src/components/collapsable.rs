@@ -36,7 +36,7 @@ pub fn new<T: Bundle>(bundle: T, label: impl Into<String>, collapsed: bool) -> i
                     },
                     ..Default::default()
                 },
-                Children::spawn(Spawn(bundle)),
+                Children::spawn_one(bundle),
             )),
         )),
     )

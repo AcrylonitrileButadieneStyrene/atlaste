@@ -15,10 +15,10 @@ pub fn new() -> impl Bundle {
             ..Default::default()
         },
         ThemeBackgroundColor(crate::theme::tokens::PANEL_BACKGROUND),
-        Children::spawn(Spawn(crate::components::collapsable::new(
+        Children::spawn_one(crate::components::collapsable::new(
             crate::components::enum_selector::new::<CodePage>(),
             "Codepage",
             false,
-        ))),
+        )),
     )
 }

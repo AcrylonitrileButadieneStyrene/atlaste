@@ -1,12 +1,5 @@
-use bevy::{
-    feathers::{theme::ThemeBackgroundColor, tokens},
-    prelude::*,
-    ui_widgets::observe,
-};
-use bevy_simple_text_input::{
-    TextInput, TextInputCursorPos, TextInputInactive, TextInputPlaceholder, TextInputSettings,
-    TextInputSubmitMessage,
-};
+use bevy::{feathers::theme::ThemeBackgroundColor, prelude::*, ui_widgets::observe};
+use bevy_simple_text_input::TextInputSubmitMessage;
 
 use crate::{components::enum_selector::VariantSelected, sections::settings::CodePage};
 
@@ -47,27 +40,13 @@ pub fn new() -> impl Bundle {
         },
         ThemeBackgroundColor(crate::theme::tokens::PANEL_BACKGROUND),
         Children::spawn((
-            Spawn((
-                SearchMarker,
-                Node {
-                    border: UiRect::bottom(Val::Px(1.)),
-                    ..Default::default()
-                },
-                ThemeBackgroundColor(tokens::BUTTON_BG),
-                TextInput,
-                TextInputSettings {
-                    retain_on_submit: true,
-                    ..Default::default()
-                },
-                TextInputCursorPos::default(),
-                TextInputInactive(true),
-                TextInputPlaceholder {
-                    value: String::from("Search..."),
-                    ..Default::default()
-                },
-                observe(
-                    |trigger: On<Pointer<Click>>, mut query: Query<&mut TextInputInactive>| {
-                        query.get_mut(trigger.entity).unwrap().0 = false;
+            Spawn(crate::components::text_input::new(
+                "Search...",
+                (
+                    SearchMarker,
+                    Node {
+                        border: UiRect::bottom(Val::Px(1.)),
+                        ..Default::default()
                     },
                 ),
             )),

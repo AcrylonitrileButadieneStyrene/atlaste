@@ -44,19 +44,21 @@ pub fn on_add(
              children: Query<&Children>,
              mut visibility: Query<&mut Visibility, With<SelectionMarker>>|
              -> Result {
-                match event.enabling {
-                    true => commands.entity(event.entity).insert(Selected),
-                    false => commands.entity(event.entity).remove::<Selected>(),
-                };
+                if event.enabling {
+                    commands.entity(event.entity).insert(Selected);
+                } else {
+                    commands.entity(event.entity).remove::<Selected>();
+                }
 
                 for child in children.get(event.entity)? {
                     let Ok(mut visibility) = visibility.get_mut(*child) else {
                         continue;
                     };
 
-                    *visibility = match event.enabling {
-                        true => Visibility::Inherited,
-                        false => Visibility::Hidden,
+                    *visibility = if event.enabling {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
                     };
                 }
 

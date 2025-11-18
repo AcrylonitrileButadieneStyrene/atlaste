@@ -6,9 +6,11 @@ use bevy::{
     prelude::*,
 };
 
+mod file;
+
 pub fn new() -> impl Bundle {
     (
-        Name::new("UI Title Bar"),
+        Name::new("UI Toolbar"),
         Node {
             grid_row: GridPlacement::start(1),
             grid_column: GridPlacement::start_span(1, 3),
@@ -28,10 +30,7 @@ pub fn new() -> impl Bundle {
                 TextFont::from_font_size(20.),
                 ThemeFontColor(tokens::TEXT_MAIN),
             )),
-            Spawn(crate::components::menu_button::new(
-                "File",
-                Spawn(Text::new("hello")),
-            )),
+            Spawn(file::new()),
         )),
     )
 }

@@ -20,19 +20,17 @@ pub fn on_add_map_unit(
             Vec2::new(map.width as f32 + 0.2, map.height as f32 + 0.2),
             -2.0,
         ),
-        Children::spawn((
+        Children::spawn_one((
             // prevent transparency from seeing the window outline
-            Spawn((
-                Name::new("Cover"),
-                Transform::from_translation(Vec3::new(0., 0., -1.)).with_scale(Vec3::new(
-                    map.width as f32,
-                    map.height as f32,
-                    1.0,
-                )),
-                Pickable::IGNORE,
-                Mesh2d(rectangle.0.clone()),
-                MeshMaterial2d(materials.add(ColorMaterial::from_color(BLACK))),
+            Name::new("Cover"),
+            Transform::from_translation(Vec3::new(0., 0., -1.)).with_scale(Vec3::new(
+                map.width as f32,
+                map.height as f32,
+                1.0,
             )),
+            Pickable::IGNORE,
+            Mesh2d(rectangle.0.clone()),
+            MeshMaterial2d(materials.add(ColorMaterial::from_color(BLACK))),
         )),
     ));
 
