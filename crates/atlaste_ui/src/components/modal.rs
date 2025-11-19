@@ -9,15 +9,15 @@ use bevy::{
     ui_widgets::{Activate, observe},
 };
 
-#[derive(Component)]
-struct Marker;
+#[derive(EntityEvent)]
+#[entity_event(propagate, auto_propagate)]
+pub struct Close(pub Entity);
 
 pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
     name: impl Into<String>,
     contents: C,
 ) -> impl Bundle {
     (
-        Marker,
         Node {
             flex_direction: FlexDirection::Column,
             justify_self: JustifySelf::Center,
@@ -49,19 +49,9 @@ pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
                                 variant: ButtonVariant::Primary,
                                 corners: RoundedCorners::None,
                             },
-                            observe(
-                                |event: On<Activate>,
-                                 mut commands: Commands,
-                                 query: Query<&ChildOf>,
-                                 filter: Query<Has<Marker>>| {
-                                    for parent in query.iter_ancestors(event.entity) {
-                                        if filter.get(parent).unwrap_or_default() {
-                                            commands.entity(parent).despawn();
-                                            break;
-                                        }
-                                    }
-                                },
-                            ),
+                            observe(|event: On<Activate>, mut commands: Commands| {
+                                commands.trigger(Close(event.entity));
+                            }),
                             Spawn(Text::new("X")),
                         )),
                     )),
@@ -77,5 +67,8 @@ pub fn new<C: SpawnableList<ChildOf> + Send + Sync + 'static>(
                 Children::spawn(contents),
             )),
         )),
+        observe(|close: On<Close>, mut commands: Commands| {
+            commands.entity(close.0).despawn();
+        }),
     )
 }

@@ -412,7 +412,6 @@ dependencies = [
  "encoding_rs",
  "log",
  "modular-bitfield",
- "rfd",
  "serde",
  "strum",
 ]
@@ -444,6 +443,7 @@ dependencies = [
  "bevy",
  "bevy_simple_text_input",
  "encoding_rs",
+ "rfd",
  "strum",
  "url",
 ]
