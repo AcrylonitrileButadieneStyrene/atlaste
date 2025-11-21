@@ -39,7 +39,7 @@ fn rearrange(pixels: &[u8]) -> Vec<u8> {
     buf
 }
 
-fn chromakey(pixels: &mut [u8], key: Option<u32>) {
+pub fn chromakey(pixels: &mut [u8], key: Option<u32>) {
     if let Some(key) = key {
         for pixel in pixels.chunks_exact_mut(4) {
             let color = u32::from_be_bytes(pixel.try_into().unwrap()) >> 8;

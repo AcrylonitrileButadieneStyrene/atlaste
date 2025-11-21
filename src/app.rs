@@ -8,7 +8,7 @@ pub fn run(args: crate::Args) -> AppExit {
         .add_plugins((
             default_plugins(),
             MeshPickingPlugin,
-            atlaste_image::Plugin,
+            atlaste_asset::Plugin,
             atlaste_lcf::Plugin,
             atlaste_ui::Plugin,
             crate::editor::Plugin,

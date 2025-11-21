@@ -76,7 +76,7 @@ lto = true
 strip = true
 
 [dependencies]
-atlaste_image = { path = "./crates/atlaste_image" }
+atlaste_asset = { path = "./crates/atlaste_asset" }
 atlaste_lcf = { path = "./crates/atlaste_lcf" }
 atlaste_ui = { path = "./crates/atlaste_ui" }
 bevy = { workspace = true }

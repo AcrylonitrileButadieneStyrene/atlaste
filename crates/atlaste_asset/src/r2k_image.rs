@@ -1,31 +1,17 @@
-use std::sync::Arc;
-
 use bevy::{
     asset::{AssetLoader, ReadAssetBytesError},
     prelude::*,
 };
 use png::DecodingError;
 
-mod chipset;
-
-pub use chipset::image_to_chipset;
-
-pub struct Plugin;
-impl bevy::prelude::Plugin for Plugin {
-    fn build(&self, app: &mut App) {
-        app.init_asset::<IndexedImage>()
-            .register_asset_loader(IndexedImageAssetLoader);
-    }
-}
-
 #[derive(Asset, TypePath)]
-pub struct IndexedImage {
+pub struct R2kImage {
     pub image: Handle<Image>,
-    pub palette: Option<Arc<[u8]>>,
+    pub alpha_key: Option<u32>,
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum IndexedImageLoadError {
+pub enum R2kImageLoadError {
     #[error("io error {0}")]
     IO(#[from] std::io::Error),
     #[error("read error {0}")]
@@ -34,11 +20,11 @@ pub enum IndexedImageLoadError {
     Decode(#[from] DecodingError),
 }
 
-struct IndexedImageAssetLoader;
-impl AssetLoader for IndexedImageAssetLoader {
-    type Asset = IndexedImage;
+pub struct R2kImageAssetLoader;
+impl AssetLoader for R2kImageAssetLoader {
+    type Asset = R2kImage;
     type Settings = ();
-    type Error = IndexedImageLoadError;
+    type Error = R2kImageLoadError;
 
     async fn load(
         &self,
@@ -53,21 +39,21 @@ impl AssetLoader for IndexedImageAssetLoader {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf).await?;
 
-        let palette = match ext {
-            Some("png") => {
-                let decoder = png::Decoder::new(std::io::Cursor::new(buf)).read_info()?;
-                decoder
-                    .info()
-                    .palette
-                    .as_ref()
-                    .map(|data| data.to_vec().into_boxed_slice().into())
-            }
+        let alpha_key = match ext {
+            Some("png") => png::Decoder::new(std::io::Cursor::new(buf))
+                .read_info()?
+                .info()
+                .palette
+                .as_ref()
+                .map(|palette| {
+                    u32::from(palette[0]) << 16 | u32::from(palette[1]) << 8 | u32::from(palette[2])
+                }),
             Some("bmp") => todo!(),
             Some(x) => panic!("unknown image type {x}"),
             None => panic!("image has no extension"),
         };
 
-        Ok(Self::Asset { image, palette })
+        Ok(Self::Asset { image, alpha_key })
     }
 
     fn extensions(&self) -> &[&str] {

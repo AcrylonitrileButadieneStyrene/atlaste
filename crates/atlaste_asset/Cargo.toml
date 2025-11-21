@@ -1,5 +1,5 @@
 [package]
-name = "atlaste_image"
+name = "atlaste_asset"
 version = "0.1.0"
 edition = "2024"
 

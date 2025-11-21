@@ -401,7 +401,7 @@ dependencies = [
 name = "atlaste"
 version = "0.1.0"
 dependencies = [
- "atlaste_image",
+ "atlaste_asset",
  "atlaste_lcf",
  "atlaste_ui",
  "bevy",
@@ -417,7 +417,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "atlaste_image"
+name = "atlaste_asset"
 version = "0.1.0"
 dependencies = [
  "bevy",

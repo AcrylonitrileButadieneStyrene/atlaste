@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use atlaste_image::IndexedImage;
+use atlaste_asset::R2kImage;
 use bevy::{asset::LoadState, prelude::*};
 
 use crate::{
@@ -10,8 +8,8 @@ use crate::{
 
 #[derive(Component)]
 pub struct Loading {
-    png: Handle<IndexedImage>,
-    bmp: Handle<IndexedImage>,
+    png: Handle<R2kImage>,
+    bmp: Handle<R2kImage>,
 }
 
 #[derive(Component)]
@@ -51,14 +49,14 @@ pub fn start_on_add_map(
 
 enum State {
     Loading,
-    Loaded(Handle<Image>, Option<Arc<[u8]>>),
+    Loaded(Handle<Image>, Option<u32>),
 }
 
 pub fn check(
     asset_server: Res<AssetServer>,
     query: Query<(Entity, &Loading)>,
     fallback: Res<super::Fallback>,
-    indexed_images: Res<Assets<IndexedImage>>,
+    r2k_images: Res<Assets<R2kImage>>,
     mut images: ResMut<Assets<Image>>,
     mut commands: Commands,
 ) {
@@ -79,7 +77,10 @@ pub fn check(
         }
         .and_then(|handle| {
             // it is so hopeless
-            let IndexedImage { image, palette } = indexed_images.get(&handle).unwrap();
+            let R2kImage {
+                image,
+                alpha_key: palette,
+            } = r2k_images.get(&handle).unwrap();
             match asset_server.get_load_state(image) {
                 Some(LoadState::Loaded) => Some(State::Loaded(image.clone(), palette.clone())),
                 Some(LoadState::Loading) => Some(State::Loading),
@@ -88,14 +89,9 @@ pub fn check(
         });
 
         let handle = match handle {
-            Some(State::Loaded(handle, palette)) => {
-                let alpha_key = palette.map(|palette| {
-                    u32::from(palette[0]) << 16 | u32::from(palette[1]) << 8 | u32::from(palette[2])
-                });
-
+            Some(State::Loaded(handle, alpha_key)) => {
                 let image = images.get_mut(&handle).unwrap();
-                atlaste_image::image_to_chipset(image, alpha_key);
-
+                atlaste_asset::chipset::image_to_chipset(image, alpha_key);
                 handle
             }
             Some(State::Loading) => continue,

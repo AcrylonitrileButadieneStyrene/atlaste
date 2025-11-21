@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite_render::Material2dPlugin};
+use bevy::{prelude::*, sprite_render::Material2dPlugin, ui_widgets::observe};
 
 use crate::{
     editor::map_view::map_unit::MapUnit,
@@ -23,7 +23,6 @@ fn on_add_map_unit(
     codepage: Res<CurrentCodePage>,
     asset_server: Res<AssetServer>,
     rectange: Res<UnitRectangle>,
-    mut materials: ResMut<Assets<charset::Material>>,
     game: Res<GameData>,
 ) -> Result {
     let MapUnit { map, .. } = query.get(event.entity)?;
@@ -40,7 +39,20 @@ fn on_add_map_unit(
     for event in &map.events {
         let page = &event.pages[0];
 
-        dbg!(event.id);
+        let file = codepage
+            .0
+            .to_encoding()
+            .decode(&page.graphic.file)
+            .0
+            .to_string();
+        let charset = game
+            .game_dir
+            .resolve(&format!("CharSet/{}.png", file)) // todo: also this one can also be a .bmp
+            .unwrap();
+        let options = u32::from_ne_bytes(
+            charset::Options::from_event(&page.graphic, &page.animation_type).into_bytes(),
+        );
+
         commands.spawn((
             ChildOf(container),
             Transform::from_scale(Vec3::new(1.5, 2., 1.)).with_translation(Vec3::new(
@@ -49,29 +61,42 @@ fn on_add_map_unit(
                 (event.y + event.x) as f32 / 1000.,
             )),
             Mesh2d(rectange.0.clone()),
-            MeshMaterial2d(
-                materials.add(charset::Material {
-                    texture: asset_server.load(
-                        game.game_dir
-                            .resolve(&format!(
-                                "CharSet/{}.png", // todo: also this one can also be a .bmp
-                                dbg!(
-                                    codepage
-                                        .0
-                                        .to_encoding()
-                                        .decode(&page.graphic.file)
-                                        .0
-                                        .to_string()
-                                )
-                            ))
-                            .unwrap(),
-                    ),
-                    options: dbg!(u32::from_ne_bytes(
-                        charset::Options::from_event(&page.graphic, &page.animation_type)
-                            .into_bytes(),
-                    )),
-                }),
-            ),
+            Children::spawn_one((
+                atlaste_asset::ManagedAsset(
+                    asset_server
+                        .load::<atlaste_asset::R2kImage>(charset)
+                        .untyped(),
+                ),
+                observe(
+                    move |loaded: On<atlaste_asset::ManagedAssetLoaded>,
+                          r2k_images: Res<Assets<atlaste_asset::R2kImage>>,
+                          mut images: ResMut<Assets<Image>>,
+                          parent: Query<&ChildOf>,
+                          mut commands: Commands,
+                          mut materials: ResMut<Assets<charset::Material>>|
+                          -> Result {
+                        if !loaded.success {
+                            return Ok(());
+                        }
+
+                        let r2k = r2k_images.get(&loaded.handle.clone().typed()).unwrap();
+                        let image = images.get_mut(&r2k.image.clone()).unwrap();
+
+                        if let Some(data) = image.data.as_mut() {
+                            atlaste_asset::chipset::chromakey(data, r2k.alpha_key);
+                        }
+
+                        commands.entity(parent.get(loaded.entity)?.parent()).insert(
+                            MeshMaterial2d(materials.add(charset::Material {
+                                texture: r2k.image.clone(),
+                                options,
+                            })),
+                        );
+
+                        Ok(())
+                    },
+                ),
+            )),
         ));
     }
 

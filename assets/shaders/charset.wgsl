@@ -30,7 +30,7 @@ fn fragment(
 
     let offset = vec2(
         pattern + index % 4 * 3,
-        direction + trunc(index / 4) * 4,
+        f32(animation != 5) * direction + trunc(index / 4) * 4,
     );
 
     return textureSample(texture, texture_sampler, (in.uv + offset + animated) / vec2(12, 8));
