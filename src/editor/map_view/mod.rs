@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::state::GameData;
 
 pub mod background;
+pub mod events;
 pub mod map_unit;
 pub mod panorama;
 pub mod tiles;
@@ -10,9 +11,14 @@ pub mod tiles;
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((map_unit::Plugin, panorama::Plugin, tiles::Plugin))
-            .add_observer(on_add)
-            .add_observer(background::on_add_map_unit);
+        app.add_plugins((
+            map_unit::Plugin,
+            panorama::Plugin,
+            tiles::Plugin,
+            events::Plugin,
+        ))
+        .add_observer(on_add)
+        .add_observer(background::on_add_map_unit);
     }
 }
 
