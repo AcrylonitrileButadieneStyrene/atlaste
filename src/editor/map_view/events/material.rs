@@ -37,11 +37,11 @@ pub struct Options {
 }
 
 impl Options {
-    pub fn from_event(graphic: &Graphic, animation: &AnimationType) -> Self {
-        Options::new()
+    pub fn from_event(graphic: &Graphic, animation: AnimationType) -> Self {
+        Self::new()
             .with_index(graphic.index as u8)
             .with_pattern(graphic.pattern as u8)
             .with_direction(graphic.direction as u8)
-            .with_animation(*animation as u8)
+            .with_animation(animation as u8)
     }
 }

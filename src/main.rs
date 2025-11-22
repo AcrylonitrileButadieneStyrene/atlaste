@@ -17,10 +17,10 @@ struct Args {
 fn main() -> bevy::app::AppExit {
     let mut args = <Args as clap::Parser>::parse();
 
-    if let Some(path) = &args.game_dir {
-        if path.ends_with("RPG_RT.ldb") {
-            args.game_dir = Some(path.parent().unwrap().to_owned());
-        }
+    if let Some(path) = &args.game_dir
+        && path.ends_with("RPG_RT.ldb")
+    {
+        args.game_dir = Some(path.parent().unwrap().to_owned());
     }
 
     app::run(args)

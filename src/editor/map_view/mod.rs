@@ -1,6 +1,16 @@
-use bevy::prelude::*;
+/*!
+   Controls the view of maps inside of the 2d editor.
 
-use crate::state::GameData;
+   Loads begin in [`map_unit`], with an observer for when the map tree emits an [`atlaste_ui::sections::map_tree::EntryClicked`] event.
+
+   When the map finishes loading:
+   - [`events`] begins loading all of the different charsets for every event.
+   - [`panorama`] begins loading the panorama image for the dynamic background.
+   - [`tiles`] begins loading the chipset for the upper and lower tiles.
+   - [`background`] creates a clickable region for controlling the map itself.
+*/
+
+use bevy::prelude::*;
 
 pub mod background;
 pub mod events;
@@ -11,32 +21,8 @@ pub mod tiles;
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            map_unit::Plugin,
-            panorama::Plugin,
-            tiles::Plugin,
-            events::Plugin,
-        ))
-        .add_observer(on_add)
-        .add_observer(background::on_add_map_unit);
+        app.add_plugins((events::Plugin, panorama::Plugin, tiles::Plugin))
+            .add_observer(background::on_add_map_unit)
+            .add_observer(map_unit::on_map_tree_entry_clicked);
     }
-}
-
-fn on_add(
-    trigger: On<atlaste_ui::sections::map_tree::EntryClicked>,
-    mut commands: Commands,
-    game: Res<GameData>,
-    asset_server: Res<AssetServer>,
-) {
-    let map = asset_server.load(
-        game.game_dir
-            .resolve(&format!("Map{:0>4}.lmu", trigger.0))
-            .unwrap(),
-    );
-
-    commands.spawn((
-        map_unit::Loading(map),
-        Transform::default(),
-        Visibility::default(),
-    ));
 }

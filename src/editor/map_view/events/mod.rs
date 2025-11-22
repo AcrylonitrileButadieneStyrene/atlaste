@@ -6,12 +6,12 @@ use crate::{
     utils::unit_mesh::UnitRectangle,
 };
 
-mod charset;
+mod material;
 
 pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(Material2dPlugin::<charset::Material>::default())
+        app.add_plugins(Material2dPlugin::<material::Material>::default())
             .add_observer(on_add_map_unit);
     }
 }
@@ -47,10 +47,10 @@ fn on_add_map_unit(
             .to_string();
         let charset = game
             .game_dir
-            .resolve(&format!("CharSet/{}.png", file)) // todo: also this one can also be a .bmp
+            .resolve(&format!("CharSet/{file}.png")) // todo: also this one can also be a .bmp
             .unwrap();
         let options = u32::from_ne_bytes(
-            charset::Options::from_event(&page.graphic, &page.animation_type).into_bytes(),
+            material::Options::from_event(&page.graphic, page.animation_type).into_bytes(),
         );
 
         commands.spawn((
@@ -62,36 +62,43 @@ fn on_add_map_unit(
             )),
             Mesh2d(rectange.0.clone()),
             Children::spawn_one((
-                atlaste_asset::ManagedAsset(
-                    asset_server
+                atlaste_asset::ObservedAsset {
+                    handle: asset_server
                         .load::<atlaste_asset::R2kImage>(charset)
                         .untyped(),
-                ),
+                    despawn: true,
+                },
                 observe(
-                    move |loaded: On<atlaste_asset::ManagedAssetLoaded>,
+                    move |loaded: On<atlaste_asset::ObservedAssetLoaded>,
                           r2k_images: Res<Assets<atlaste_asset::R2kImage>>,
                           mut images: ResMut<Assets<Image>>,
                           parent: Query<&ChildOf>,
                           mut commands: Commands,
-                          mut materials: ResMut<Assets<charset::Material>>|
+                          mut materials: ResMut<Assets<material::Material>>|
                           -> Result {
-                        if !loaded.success {
-                            return Ok(());
+                        match &loaded.status {
+                            Ok(()) => {
+                                let r2k = r2k_images.get(&loaded.handle.clone().typed()).unwrap();
+                                let image = images.get_mut(&r2k.image.clone()).unwrap();
+
+                                if let Some(data) = image.data.as_mut() {
+                                    atlaste_asset::chipset::chromakey(data, r2k.alpha_key);
+                                }
+
+                                commands.entity(parent.get(loaded.entity)?.parent()).insert(
+                                    MeshMaterial2d(materials.add(material::Material {
+                                        texture: r2k.image.clone(),
+                                        options,
+                                    })),
+                                );
+                            }
+                            Err(None) => {
+                                error!("CharSet did not start loading");
+                            }
+                            Err(Some(err)) => {
+                                error!("Failed to load CharSet: {err}");
+                            }
                         }
-
-                        let r2k = r2k_images.get(&loaded.handle.clone().typed()).unwrap();
-                        let image = images.get_mut(&r2k.image.clone()).unwrap();
-
-                        if let Some(data) = image.data.as_mut() {
-                            atlaste_asset::chipset::chromakey(data, r2k.alpha_key);
-                        }
-
-                        commands.entity(parent.get(loaded.entity)?.parent()).insert(
-                            MeshMaterial2d(materials.add(charset::Material {
-                                texture: r2k.image.clone(),
-                                options,
-                            })),
-                        );
 
                         Ok(())
                     },

@@ -45,7 +45,7 @@ fn on_spawn(
                     game.game_dir
                         .resolve(&format!(
                             "Panorama/{}.png", // todo: this one can also be a .bmp
-                            code_page.0.to_encoding().decode(file).0.to_string()
+                            code_page.0.to_encoding().decode(file).0
                         ))
                         .unwrap()
                 }),
