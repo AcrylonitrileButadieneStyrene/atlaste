@@ -443,6 +443,7 @@ dependencies = [
  "bevy",
  "bevy_simple_text_input",
  "encoding_rs",
+ "regex",
  "rfd",
  "strum",
  "url",

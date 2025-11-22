@@ -26,6 +26,9 @@ pub fn update(
     {
         if let Ok(mut scroll_position) = position.get_mut(*entity) {
             scroll_position.y -= delta;
+            if scroll_position.y < 0. {
+                scroll_position.y = 0.;
+            }
         }
     }
 }
