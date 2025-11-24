@@ -20,15 +20,14 @@ pub fn on_map_tree_entry_clicked(
     game: Res<GameData>,
     asset_server: Res<AssetServer>,
 ) {
-    let path = game
-        .game_dir
-        .resolve(&format!("Map{:0>4}.lmu", trigger.0))
-        .unwrap();
+    let name = format!("Map{:0>4}.lmu", trigger.0);
+    let path = game.game_dir.resolve(&name).unwrap();
     let map = asset_server.load::<MapUnitAsset>(path);
 
     commands.spawn((
         Transform::default(),
         Visibility::default(),
+        atlaste_ui::sections::layers::CreateLayer { name },
         atlaste_asset::ObservedAsset {
             handle: map.untyped(),
             despawn: false,

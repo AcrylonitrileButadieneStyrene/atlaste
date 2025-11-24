@@ -11,12 +11,10 @@ impl bevy::prelude::Plugin for Plugin {
             .add_systems(Startup, (camera::setup, select::setup))
             .add_systems(
                 Update,
-                (
-                    camera::disable_when_hovering_over_ui.before(bevy_pancam::PanCamSystems),
-                    select::handle_keypress,
-                ),
+                (camera::disable_when_hovering_over_ui.before(bevy_pancam::PanCamSystems),),
             )
             .add_observer(select::on_add)
-            .add_observer(select::on_click);
+            .add_observer(select::on_select)
+            .add_observer(select::on_deselect);
     }
 }

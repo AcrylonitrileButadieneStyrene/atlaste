@@ -10,12 +10,7 @@ pub struct Plugin;
 impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            bevy::feathers::FeathersPlugin,
-            bevy::ui_widgets::ButtonPlugin,
-            bevy::ui_widgets::SliderPlugin,
-            bevy::ui_widgets::CheckboxPlugin,
-            bevy::ui_widgets::ScrollbarPlugin,
-            bevy::ui_widgets::RadioGroupPlugin,
+            bevy::feathers::FeathersPlugins,
             bevy_simple_text_input::TextInputPlugin,
         ))
         .insert_resource(theme::default())
@@ -30,10 +25,13 @@ impl bevy::prelude::Plugin for Plugin {
                 sections::map_tree::search
                     .after(bevy_simple_text_input::TextInputSystem)
                     .run_if(on_message::<bevy_simple_text_input::TextInputSubmitMessage>),
+                sections::layers::handle_escape,
             ),
         )
         .add_observer(sections::map_tree::on_add_entries)
         .add_observer(sections::map_tree::on_code_page_changed)
-        .add_observer(sections::map_tree::on_update_text);
+        .add_observer(sections::map_tree::on_update_text)
+        .add_observer(sections::layers::on_create_add)
+        .add_observer(sections::layers::on_deselect_all);
     }
 }

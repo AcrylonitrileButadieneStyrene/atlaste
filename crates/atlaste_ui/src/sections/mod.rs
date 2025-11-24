@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+pub mod layers;
 pub mod map_tree;
 pub mod settings;
 pub mod toolbar;
@@ -13,7 +14,11 @@ pub(crate) fn setup(mut commands: Commands) {
             display: Display::Grid,
             width: Val::Vw(100.0),
             height: Val::Vh(100.0),
-            grid_template_rows: vec![GridTrack::px(TITLE_BAR_HEIGHT), GridTrack::auto()],
+            grid_template_rows: vec![
+                GridTrack::px(TITLE_BAR_HEIGHT),
+                GridTrack::flex(1.),
+                GridTrack::flex(1.),
+            ],
             grid_template_columns: vec![
                 GridTrack::px(224.0),
                 GridTrack::auto(),
@@ -26,6 +31,7 @@ pub(crate) fn setup(mut commands: Commands) {
             Spawn(crate::sections::toolbar::new()),
             Spawn(crate::sections::map_tree::new()),
             Spawn(crate::sections::settings::new()),
+            Spawn(crate::sections::layers::new()),
         )),
     ));
 }

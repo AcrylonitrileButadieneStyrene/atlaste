@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 use bevy::{
     feathers::{theme::ThemeBackgroundColor, tokens},
     prelude::*,
-    ui_widgets::{Activate, observe},
+    ui_widgets::observe,
 };
 use bevy_simple_text_input::TextInputSubmitMessage;
 
@@ -38,7 +38,7 @@ pub fn new() -> impl Bundle {
         Node {
             flex_direction: FlexDirection::Column,
             row_gap: px(4),
-            grid_row: GridPlacement::start(2),
+            grid_row: GridPlacement::start_span(2, 2),
             grid_column: GridPlacement::start(1),
             padding: UiRect::all(px(4)),
             overflow: Overflow::hidden_y(),

@@ -1,3 +1,4 @@
+use atlaste_ui::sections::layers::{Layer, Selected};
 use bevy::{color::palettes::tailwind, prelude::*};
 
 #[derive(Resource)]
@@ -14,67 +15,47 @@ pub fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>
 }
 
 #[derive(Component)]
-pub struct Selectable(pub Vec2, pub f32);
+pub struct CreateSelectable(pub Vec2, pub f32);
 
 #[derive(Component)]
-pub struct Selected;
+#[relationship_target(relationship = SelectionIndicator, linked_spawn)]
+pub struct Selectable(Entity);
 
 #[derive(Component)]
-pub struct SelectionMarker;
-
-#[derive(EntityEvent)]
-struct Activation {
-    entity: Entity,
-    enabling: bool,
-}
+#[relationship(relationship_target = Selectable)]
+pub struct SelectionIndicator(Entity);
 
 pub fn on_add(
-    event: On<Add, Selectable>,
-    query: Query<&Selectable>,
+    event: On<Add, CreateSelectable>,
+    query: Query<&CreateSelectable, With<Layer>>,
     mut commands: Commands,
     unit_rect: Res<crate::utils::unit_mesh::UnitRectangle>,
     outline: Res<Materials>,
 ) -> Result {
-    let component = query.get(event.entity)?;
-    let mut entity = commands.entity(event.entity);
-    entity
+    let create = query.get(event.entity)?;
+
+    commands
+        .entity(event.entity)
+        .remove::<CreateSelectable>()
         .observe(
-            |event: On<Activation>,
-             mut commands: Commands,
-             children: Query<&Children>,
-             mut visibility: Query<&mut Visibility, With<SelectionMarker>>|
-             -> Result {
-                if event.enabling {
-                    commands.entity(event.entity).insert(Selected);
-                } else {
-                    commands.entity(event.entity).remove::<Selected>();
-                }
-
-                for child in children.get(event.entity)? {
-                    let Ok(mut visibility) = visibility.get_mut(*child) else {
-                        continue;
-                    };
-
-                    *visibility = if event.enabling {
-                        Visibility::Inherited
-                    } else {
-                        Visibility::Hidden
-                    };
-                }
-
+            |click: On<Pointer<Click>>, item: Query<&Layer>, mut commands: Commands| -> Result {
+                let mut event = click.clone();
+                event.entity = *item.get(click.entity)?.collection();
+                commands.trigger(event);
                 Ok(())
             },
         )
         .with_children(|parent| {
-            let base = Transform::from_scale(component.0.extend(1.0))
-                .with_translation(Vec3::ZERO.with_z(component.1));
+            let base = Transform::from_scale(create.0.extend(1.0))
+                .with_translation(Vec3::ZERO.with_z(create.1));
+            // always visible, looks deselected, gets covered by the selection indicator
             parent.spawn((
                 base,
                 Mesh2d(unit_rect.0.clone()),
                 MeshMaterial2d(outline.deselected.clone()),
             ));
             parent.spawn((
-                SelectionMarker,
+                SelectionIndicator(event.entity),
                 base.with_translation(base.translation.with_z(base.translation.z + 0.1)),
                 Visibility::Hidden,
                 Mesh2d(unit_rect.0.clone()),
@@ -85,40 +66,31 @@ pub fn on_add(
     Ok(())
 }
 
-pub fn on_click(
-    event: On<Pointer<Click>>,
-    filter: Query<(), (With<Selectable>, Without<Selected>)>,
-    mut commands: Commands,
-    old: Query<Entity, With<Selected>>,
+pub fn on_select(
+    event: On<Add, Selected>,
+    query: Query<&Selectable>,
+    visibility: Query<&mut Visibility>,
 ) {
-    if event.button != PointerButton::Primary || filter.get(event.entity).is_err() {
-        return;
-    }
-
-    for entity in old.iter() {
-        commands.trigger(Activation {
-            entity,
-            enabling: false,
-        });
-    }
-
-    commands.trigger(Activation {
-        entity: event.entity,
-        enabling: true,
-    });
+    set(event.entity, query, visibility, Visibility::Inherited);
 }
 
-pub fn handle_keypress(
-    keys: Res<ButtonInput<KeyCode>>,
-    mut commands: Commands,
-    selected: Query<Entity, With<Selected>>,
+pub fn on_deselect(
+    event: On<Remove, Selected>,
+    query: Query<&Selectable>,
+    visibility: Query<&mut Visibility>,
 ) {
-    if keys.just_pressed(KeyCode::Escape) {
-        for entity in selected.iter() {
-            commands.trigger(Activation {
-                entity,
-                enabling: false,
-            });
-        }
+    set(event.entity, query, visibility, Visibility::Hidden);
+}
+
+fn set(
+    entity: Entity,
+    query: Query<&Selectable>,
+    mut visibility: Query<&mut Visibility>,
+    value: Visibility,
+) {
+    if let Ok(selectable) = query.get(entity)
+        && let Ok(mut visibility) = visibility.get_mut(*selectable.collection())
+    {
+        *visibility = value;
     }
 }
