@@ -48,9 +48,18 @@ impl AssetLoader for R2kImageAssetLoader {
                 .map(|palette| {
                     u32::from(palette[0]) << 16 | u32::from(palette[1]) << 8 | u32::from(palette[2])
                 }),
-            Some("bmp") => todo!(),
-            Some(x) => panic!("unknown image type {x}"),
-            None => panic!("image has no extension"),
+            Some("bmp") => {
+                warn!("bmp palette not yet implemented");
+                None
+            }
+            Some(x) => {
+                error!("unknown image type {x}");
+                None
+            }
+            None => {
+                error!("image has no extension");
+                None
+            }
         };
 
         Ok(Self::Asset { image, alpha_key })

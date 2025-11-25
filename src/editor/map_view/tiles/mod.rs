@@ -1,4 +1,3 @@
-use atlaste_asset::{DualR2kImage, DualR2kImageLoaded, R2kImage};
 use bevy::{prelude::*, ui_widgets::observe};
 
 mod fallback;
@@ -33,13 +32,13 @@ pub fn start_on_add_map(
     let bytes = &game.database.chipsets[map.chipset as usize - 1].file;
     let file = code_page.0.to_encoding().decode(bytes).0.to_string();
     commands.entity(spawn.entity).insert((
-        DualR2kImage {
+        atlaste_asset::DualR2kImage {
             base: game.game_dir.resolve("ChipSet").unwrap(),
             file,
         },
         observe(
-            |loaded: On<DualR2kImageLoaded>,
-             r2k_images: Res<Assets<R2kImage>>,
+            |loaded: On<atlaste_asset::DualR2kImageLoaded>,
+             r2k_images: Res<Assets<atlaste_asset::R2kImage>>,
              mut images: ResMut<Assets<Image>>,
              fallback: Res<fallback::Fallback>,
              mut commands: Commands| {
