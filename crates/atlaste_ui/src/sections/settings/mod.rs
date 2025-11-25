@@ -1,4 +1,7 @@
-use bevy::{feathers::theme::{ThemeBackgroundColor, ThemeBorderColor}, prelude::*};
+use bevy::{
+    feathers::theme::{ThemeBackgroundColor, ThemeBorderColor},
+    prelude::*,
+};
 
 mod code_page;
 pub use code_page::CodePage;

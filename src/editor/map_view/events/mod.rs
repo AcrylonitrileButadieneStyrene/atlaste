@@ -21,7 +21,6 @@ fn on_add_map_unit(
     query: Query<&MapUnit>,
     mut commands: Commands,
     codepage: Res<CurrentCodePage>,
-    asset_server: Res<AssetServer>,
     rectange: Res<UnitRectangle>,
     game: Res<GameData>,
 ) -> Result {
@@ -45,10 +44,6 @@ fn on_add_map_unit(
             .decode(&page.graphic.file)
             .0
             .to_string();
-        let charset = game
-            .game_dir
-            .resolve(&format!("CharSet/{file}.png")) // todo: also this one can also be a .bmp
-            .unwrap();
         let options = u32::from_ne_bytes(
             material::Options::from_event(&page.graphic, page.animation_type).into_bytes(),
         );
@@ -62,14 +57,12 @@ fn on_add_map_unit(
             )),
             Mesh2d(rectange.0.clone()),
             Children::spawn_one((
-                atlaste_asset::ObservedAsset {
-                    handle: asset_server
-                        .load::<atlaste_asset::R2kImage>(charset)
-                        .untyped(),
-                    despawn: true,
+                atlaste_asset::DualR2kImage {
+                    base: game.game_dir.clone(),
+                    file: format!("CharSet/{file}"),
                 },
                 observe(
-                    move |loaded: On<atlaste_asset::ObservedAssetLoaded>,
+                    move |loaded: On<atlaste_asset::DualR2kImageLoaded>,
                           r2k_images: Res<Assets<atlaste_asset::R2kImage>>,
                           mut images: ResMut<Assets<Image>>,
                           parent: Query<&ChildOf>,
@@ -78,7 +71,7 @@ fn on_add_map_unit(
                           -> Result {
                         match &loaded.status {
                             Ok(()) => {
-                                let r2k = r2k_images.get(&loaded.handle.clone().typed()).unwrap();
+                                let r2k = r2k_images.get(&loaded.handle.clone()).unwrap();
                                 let image = images.get_mut(&r2k.image.clone()).unwrap();
 
                                 if let Some(data) = image.data.as_mut() {

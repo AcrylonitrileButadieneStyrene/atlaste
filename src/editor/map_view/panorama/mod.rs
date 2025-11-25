@@ -1,5 +1,5 @@
 use atlaste_lcf::lcf::lmu::PanoramaOptions;
-use bevy::{prelude::*, sprite_render::Material2dPlugin};
+use bevy::{prelude::*, sprite_render::Material2dPlugin, ui_widgets::observe};
 
 use crate::{
     editor::map_view::map_unit::MapUnit,
@@ -24,50 +24,52 @@ fn on_spawn(
     query: Query<&MapUnit>,
     mut commands: Commands,
     rectangle: Res<UnitRectangle>,
-    mut panorama_materials: ResMut<Assets<Material>>,
     code_page: Res<CurrentCodePage>,
     game: Res<GameData>,
-    asset_server: Res<AssetServer>,
 ) -> Result {
     let MapUnit { map, .. } = query.get(setup.entity)?;
 
     if map.panorama.enabled
         && let Some(file) = &map.panorama.file
     {
+        let convert = |opt: &PanoramaOptions| {
+            (match opt {
+                PanoramaOptions::NoLoop | PanoramaOptions::NoAutoscroll => 0,
+                PanoramaOptions::Autoscroll(x) => *x,
+            } + 15) as u8
+                % 31
+        };
+
+        let options = u32::from_ne_bytes(
+            Options::new()
+                .with_width(map.width as u16)
+                .with_height(map.height as u16)
+                .with_horizontal(convert(&map.panorama.horizontal))
+                .with_vertical(convert(&map.panorama.vertical))
+                .into_bytes(),
+        );
+
         commands.spawn((
             Name::new("Panorama"),
             ChildOf(setup.entity),
             Transform::from_scale(Vec3::new(map.width as f32, map.height as f32, 1.0)),
             Pickable::IGNORE,
             Mesh2d(rectangle.0.clone()),
-            MeshMaterial2d(panorama_materials.add(Material {
-                texture: asset_server.load({
-                    game.game_dir
-                        .resolve(&format!(
-                            "Panorama/{}.png", // todo: this one can also be a .bmp
-                            code_page.0.to_encoding().decode(file).0
-                        ))
-                        .unwrap()
-                }),
-                options: {
-                    let convert = |opt: &PanoramaOptions| {
-                        (match opt {
-                            PanoramaOptions::NoLoop | PanoramaOptions::NoAutoscroll => 0,
-                            PanoramaOptions::Autoscroll(x) => *x,
-                        } + 15) as u8
-                            % 31
-                    };
-
-                    u32::from_ne_bytes(
-                        Options::new()
-                            .with_width(map.width as u16)
-                            .with_height(map.height as u16)
-                            .with_horizontal(convert(&map.panorama.horizontal))
-                            .with_vertical(convert(&map.panorama.vertical))
-                            .into_bytes(),
-                    )
+            atlaste_asset::DualR2kImage {
+                base: game.game_dir.clone(),
+                file: format!("Panorama/{}", code_page.0.to_encoding().decode(file).0),
+            },
+            observe(
+                move |loaded: On<atlaste_asset::DualR2kImageLoaded>,
+                      r2k_images: Res<Assets<atlaste_asset::R2kImage>>,
+                      mut commands: Commands,
+                      mut panorama_materials: ResMut<Assets<Material>>| {
+                    let texture = r2k_images.get(&loaded.handle).unwrap().image.clone();
+                    commands.entity(loaded.entity).insert(MeshMaterial2d(
+                        panorama_materials.add(Material { texture, options }),
+                    ));
                 },
-            })),
+            ),
         ));
     }
 
