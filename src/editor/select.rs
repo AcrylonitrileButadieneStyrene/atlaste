@@ -1,4 +1,7 @@
-use atlaste_ui::sections::layers::{Layer, Selected};
+use atlaste_ui::sections::{
+    layers::{Layer, Selected},
+    tools::Tool,
+};
 use bevy::{color::palettes::tailwind, prelude::*};
 
 #[derive(Resource)]
@@ -38,10 +41,17 @@ pub fn on_add(
         .entity(event.entity)
         .remove::<CreateSelectable>()
         .observe(
-            |click: On<Pointer<Click>>, item: Query<&Layer>, mut commands: Commands| -> Result {
-                let mut event = click.clone();
-                event.entity = *item.get(click.entity)?.collection();
-                commands.trigger(event);
+            |click: On<Pointer<Click>>,
+             item: Query<&Layer>,
+             mut commands: Commands,
+             state: Res<State<Tool>>|
+             -> Result {
+                if *state == Tool::Select {
+                    let mut event = click.clone();
+                    event.entity = *item.get(click.entity)?.collection();
+                    commands.trigger(event);
+                };
+
                 Ok(())
             },
         )

@@ -11,7 +11,9 @@ use bevy::{
 };
 use strum::EnumProperty;
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, strum::EnumProperty, strum::VariantArray)]
+#[derive(
+    Clone, Debug, Default, PartialEq, Eq, Hash, strum::EnumProperty, strum::VariantArray, States,
+)]
 pub enum Tool {
     #[default]
     #[strum(props(Name = "St"))]
