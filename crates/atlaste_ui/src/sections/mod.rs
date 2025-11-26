@@ -4,6 +4,7 @@ pub mod layers;
 pub mod map_tree;
 pub mod settings;
 pub mod toolbar;
+pub mod tools;
 
 pub const TITLE_BAR_HEIGHT: f32 = 28.;
 
@@ -21,6 +22,7 @@ pub(crate) fn setup(mut commands: Commands) {
             ],
             grid_template_columns: vec![
                 GridTrack::px(224.0),
+                GridTrack::px(48.0),
                 GridTrack::auto(),
                 GridTrack::px(224.0),
             ],
@@ -28,10 +30,11 @@ pub(crate) fn setup(mut commands: Commands) {
         },
         Pickable::IGNORE,
         Children::spawn((
-            Spawn(crate::sections::toolbar::new()),
-            Spawn(crate::sections::map_tree::new()),
-            Spawn(crate::sections::settings::new()),
-            Spawn(crate::sections::layers::new()),
+            Spawn(toolbar::new()),
+            Spawn(map_tree::new()),
+            Spawn(tools::new()),
+            Spawn(settings::new()),
+            Spawn(layers::new()),
         )),
     ));
 }

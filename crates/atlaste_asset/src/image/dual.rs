@@ -25,49 +25,66 @@ pub fn on_add(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) -> Result {
-    let entity = event.entity;
-    let dual = query.get(entity)?;
-    let png = dual.base.resolve(&format!("{}.png", dual.file)).unwrap();
-    let bmp = dual.base.resolve(&format!("{}.bmp", dual.file)).unwrap();
+    let DualR2kImage { base, file } = query.get(event.entity)?;
+    let png = base.resolve(&format!("{}.png", file)).unwrap();
 
     commands.spawn((
-        ChildOf(entity),
+        ChildOf(event.entity),
         crate::ObservedAsset {
             handle: asset_server.load::<crate::R2kImage>(png).untyped(),
             despawn: true,
         },
-        observe(
-            move |event: On<crate::ObservedAssetLoaded>,
-                  mut commands: Commands,
-                  asset_server: Res<AssetServer>| match event.status {
-                Ok(()) => {
-                    commands.trigger(DualR2kImageLoaded {
-                        entity,
-                        handle: event.handle.clone().typed(),
-                        status: Ok(()),
-                    });
-                }
-                Err(_) => {
-                    commands.spawn((
-                        ChildOf(entity),
-                        crate::ObservedAsset {
-                            handle: asset_server.load::<crate::R2kImage>(&bmp).untyped(),
-                            despawn: true,
-                        },
-                        observe(
-                            move |event: On<crate::ObservedAssetLoaded>, mut commands: Commands| {
-                                commands.trigger(DualR2kImageLoaded {
-                                    entity,
-                                    handle: event.handle.clone().typed(),
-                                    status: event.status.clone(),
-                                });
-                            },
-                        ),
-                    ));
-                }
-            },
-        ),
+        observe(on_png_loaded),
     ));
+
+    Ok(())
+}
+
+fn on_png_loaded(
+    event: On<crate::ObservedAssetLoaded>,
+    parent: Query<&ChildOf>,
+    query: Query<&DualR2kImage>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) -> Result {
+    let parent = parent.get(event.entity)?.0;
+    match event.status {
+        Ok(()) => {
+            commands.trigger(DualR2kImageLoaded {
+                entity: parent,
+                handle: event.handle.clone().typed(),
+                status: Ok(()),
+            });
+        }
+        Err(_) => {
+            let DualR2kImage { base, file } = query.get(parent)?;
+            let bmp = base.resolve(&format!("{}.bmp", file)).unwrap();
+
+            commands.spawn((
+                ChildOf(parent),
+                crate::ObservedAsset {
+                    handle: asset_server.load::<crate::R2kImage>(&bmp).untyped(),
+                    despawn: true,
+                },
+                observe(on_bmp_loaded),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn on_bmp_loaded(
+    event: On<crate::ObservedAssetLoaded>,
+    parent: Query<&ChildOf>,
+    mut commands: Commands,
+) -> Result {
+    let parent = parent.get(event.entity)?.0;
+    commands.trigger(DualR2kImageLoaded {
+        entity: parent,
+        handle: event.handle.clone().typed(),
+        status: event.status.clone(),
+    });
 
     Ok(())
 }

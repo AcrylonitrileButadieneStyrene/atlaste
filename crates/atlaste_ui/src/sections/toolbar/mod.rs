@@ -13,7 +13,7 @@ pub fn new() -> impl Bundle {
         Name::new("UI Toolbar"),
         Node {
             grid_row: GridPlacement::start(1),
-            grid_column: GridPlacement::start_span(1, 3),
+            grid_column: GridPlacement::start_span(1, 4),
             align_items: AlignItems::Center,
             border: UiRect::bottom(px(1)),
             padding: UiRect::axes(px(8.), Val::ZERO),

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-mod scroll;
+mod behavior;
 
 pub mod components;
 pub mod sections;
@@ -19,7 +19,7 @@ impl bevy::prelude::Plugin for Plugin {
         .add_systems(
             Update,
             (
-                scroll::update,
+                behavior::scroll::update,
                 components::menu_button::check_hover,
                 sections::map_tree::deselect_text_inputs,
                 sections::map_tree::search
@@ -28,6 +28,7 @@ impl bevy::prelude::Plugin for Plugin {
                 sections::layers::handle_escape,
             ),
         )
+        .add_observer(behavior::radio::on_radio_value_changed)
         .add_observer(sections::map_tree::on_add_entries)
         .add_observer(sections::map_tree::on_code_page_changed)
         .add_observer(sections::map_tree::on_update_text)

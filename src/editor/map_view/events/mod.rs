@@ -44,6 +44,10 @@ fn on_add_map_unit(
             .decode(&page.graphic.file)
             .0
             .to_string();
+        if file.contains("#") || file.contains("/.") {
+            continue;
+        }
+
         let options = u32::from_ne_bytes(
             material::Options::from_event(&page.graphic, page.animation_type).into_bytes(),
         );
@@ -58,8 +62,8 @@ fn on_add_map_unit(
             Mesh2d(rectange.0.clone()),
             Children::spawn_one((
                 atlaste_asset::DualR2kImage {
-                    base: game.game_dir.clone(),
-                    file: format!("CharSet/{file}"),
+                    base: game.game_dir.resolve("CharSet").unwrap(),
+                    file,
                 },
                 observe(
                     move |loaded: On<atlaste_asset::DualR2kImageLoaded>,

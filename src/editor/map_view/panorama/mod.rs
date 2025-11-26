@@ -56,8 +56,8 @@ fn on_spawn(
             Pickable::IGNORE,
             Mesh2d(rectangle.0.clone()),
             atlaste_asset::DualR2kImage {
-                base: game.game_dir.clone(),
-                file: format!("Panorama/{}", code_page.0.to_encoding().decode(file).0),
+                base: game.game_dir.resolve("Panorama").unwrap(),
+                file: code_page.0.to_encoding().decode(file).0.to_string(),
             },
             observe(
                 move |loaded: On<atlaste_asset::DualR2kImageLoaded>,

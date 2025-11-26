@@ -28,7 +28,7 @@ pub fn new() -> impl Bundle {
         Node {
             flex_direction: FlexDirection::Column,
             grid_row: GridPlacement::start(3),
-            grid_column: GridPlacement::start(3),
+            grid_column: GridPlacement::start(4),
             padding: UiRect::all(px(4)),
             ..Default::default()
         },
